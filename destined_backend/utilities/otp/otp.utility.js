@@ -1,7 +1,7 @@
 let otpStore = {};
 
 const generateOTP = () => {
-  const otp = Math.floor(100000 + Math.random() * 900000);
+  const otp = Math.floor(1000 + Math.random() * 9000);
   return otp.toString();
 };
 
@@ -14,9 +14,7 @@ const storeOTP = (phone, otp) => {
 
 const verifyOTP = (phone, enteredOtp) => {
   const stored = otpStore[phone];
-  if (!stored) {
-    return false;
-  }
+  if (!stored) return false;
 
   const isExpired = Date.now() - stored.timestamp > 5 * 60 * 1000;
   if (isExpired) {
