@@ -39,10 +39,7 @@ const InputField = ({
           value={selectedValue}
           items={dropdownOptions}
           setOpen={setOpen}
-          setValue={callback => {
-            const selected = callback(selectedValue);
-            onValueChange(selected);
-          }}
+          setValue={onValueChange}
           placeholder={placeholder}
           listMode="MODAL"
           modalProps={{
@@ -60,6 +57,7 @@ const InputField = ({
               borderWidth: 2.5,
               borderColor: theme.colors.primary,
               backgroundColor: theme.colors.white,
+              borderRadius: theme.borderRadius.large
             },
             inputStyle,
           ]}
@@ -125,7 +123,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: width * 0.04,
-    paddingVertical: height * 0.016,
+    paddingVertical: height * 0.01,
     fontSize: theme.typography.fontSize.md,
     fontFamily: theme.typography.fontFamilyRegular,
   },
@@ -133,7 +131,7 @@ const styles = StyleSheet.create({
   leftIconContainer: {
     position: 'absolute',
     left: width * 0.034,
-    top: height * 0.026,
+    top: height * 0.02,
     zIndex: 1,
   },
 

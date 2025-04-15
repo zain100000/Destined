@@ -1,14 +1,14 @@
 const interests = [
-  "Photography",
-  "Cooking",
-  "Video_Games",
-  "Music",
-  "Travelling",
-  "Shopping",
-  "Art_&_Crafts",
-  "Swimming",
-  "Sports",
-  "Gym",
+  "📷 Photography",
+  "👨‍🍳 Cooking",
+  "🎮 Video_Games",
+  "🎵 Music",
+  "✈️ Travelling",
+  "🛍️ Shopping",
+  "🎨 Art & Crafts",
+  "🏊 Swimming",
+  "⚽ Sports",
+  "💪 Gym",
 ];
 
 exports.getInterests = (req, res) => {
