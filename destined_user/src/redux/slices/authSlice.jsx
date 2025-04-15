@@ -61,10 +61,13 @@ export const registerUser = createAsyncThunk(
   'user/registerUser',
   async (formData, {rejectWithValue}) => {
     try {
+      console.log('Sending register request...');
       const response = await axios.post(
         `${BASE_URL}/user/signup-user`,
         formData,
       );
+
+      console.log('Registration API response:', response.data);
 
       const {success, message, user} = response.data;
 
@@ -74,15 +77,11 @@ export const registerUser = createAsyncThunk(
         user,
       };
     } catch (error) {
-      console.error(
-        'Registration error:',
-        error.response?.data || error.message,
-      );
-      return rejectWithValue(
-        error.response?.data || {
-          message: 'Network Error - Could not reach server',
-        },
-      );
+      const errData = error.response?.data || {
+        message: 'Network Error - Could not reach server',
+      };
+      console.error('Registration error:', errData);
+      return rejectWithValue(errData);
     }
   },
 );

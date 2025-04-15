@@ -4,10 +4,9 @@ import {theme} from '../../../../styles/theme';
 
 const {width, height} = Dimensions.get('screen');
 
-const InterestCard = ({interestName, iconSource, isSelected}) => {
+const InterestCard = ({interestName, isSelected}) => {
   return (
     <View style={[styles.cardContainer, isSelected && styles.selectedCard]}>
-      {/* <Image source={iconSource} style={styles.interestIcon} /> */}
       <Text style={styles.interestName}>{interestName}</Text>
     </View>
   );
@@ -25,7 +24,6 @@ const styles = StyleSheet.create({
     marginHorizontal: width * 0.01,
     borderWidth: 2,
     borderColor: theme.colors.white,
-    // flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -39,13 +37,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.white,
   },
-
-  //   interestIcon: {
-  //     width: width * 0.04,
-  //     height: width * 0.04,
-  //     marginRight: width * 0.04,
-  //     tintColor: theme.colors.primary,
-  //   },
 
   interestName: {
     fontSize: theme.typography.fontSize.sm,

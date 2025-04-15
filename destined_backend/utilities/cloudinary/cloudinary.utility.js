@@ -72,7 +72,7 @@ const uploadToCloudinary = async (file, type, userId) => {
 
   switch (type) {
     case "profilePicture":
-      folder = `Destined/profilePictures/${userId}`;
+      folder = `Destined/profilePictures`;
       publicId = `profile_${timestamp}`;
       transformation = {
         width: 500,

@@ -27,7 +27,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Button from '../../utils/customComponents/customButton/Button';
 import * as Animatable from 'react-native-animatable';
 import {useDispatch, useSelector} from 'react-redux';
-import {sendOTP, verifyOTP} from '../../redux/slices/authSlice';
+import {registerUser, sendOTP, verifyOTP} from '../../redux/slices/authSlice';
 import {getInterests} from '../../redux/slices/interestSlice';
 import CustomModal from '../../utils/customModals/CustomModal';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -69,8 +69,11 @@ const Signup = () => {
   const [gender, setGender] = useState('');
   const [dob, setDOB] = useState('');
   const [password, setPassword] = useState('');
-
   const [selectedInterests, setSelectedInterests] = useState([]);
+
+  const [showRegisterAuthModal, setShowRegisterAuthModal] = useState(false);
+  const [showRegisterSuccessModal, setShowRegisterSuccessModal] =
+    useState(false);
 
   const otpRefs = useRef([]);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -804,42 +807,74 @@ const Signup = () => {
   const renderInterestStep = () => {
     return (
       <SafeAreaView style={styles.safeAreaContainer}>
-        <Animatable.View
-          animation="fadeInRight"
-          duration={800}
-          delay={200}
-          style={styles.stepContainer}>
-          <Text
-            style={[
-              styles.verifyText,
-              {color: isDark ? theme.colors.white : theme.colors.dark},
-            ]}>
-            Interests
-          </Text>
-          <Text
-            style={[
-              styles.otpDescription,
-              {color: isDark ? theme.colors.lightGray : theme.colors.gray},
-            ]}>
-            Share your interests with others
-          </Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent]}>
+          <Animatable.View
+            animation="fadeInRight"
+            duration={800}
+            delay={200}
+            style={styles.stepContainer}>
+            <Text
+              style={[
+                styles.verifyText,
+                {color: isDark ? theme.colors.white : theme.colors.dark},
+              ]}>
+              Interests
+            </Text>
+            <Text
+              style={[
+                styles.otpDescription,
+                {color: isDark ? theme.colors.lightGray : theme.colors.gray},
+              ]}>
+              Share your interests with others
+            </Text>
 
-          <FlatList
-            data={interest}
-            numColumns={2}
-            keyExtractor={(item, index) => index.toString()}
-            contentContainerStyle={{paddingBottom: 100}}
-            renderItem={({item}) => (
-              <TouchableOpacity onPress={() => toggleSelect(item)}>
-                <InterestCard
-                  interestName={item.replace(/_/g, ' ')}
-                  // iconSource={require('../../assets/icons/placeholder-icon.png')} // Replace with actual icon
-                  isSelected={selectedInterests.includes(item)}
-                />
-              </TouchableOpacity>
+            <FlatList
+              data={interest}
+              numColumns={2}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item}) => (
+                <TouchableOpacity onPress={() => toggleSelect(item)}>
+                  <InterestCard
+                    interestName={item.replace(/_/g, ' ')}
+                    isSelected={selectedInterests.includes(item)}
+                  />
+                </TouchableOpacity>
+              )}
+            />
+          </Animatable.View>
+
+          <View style={styles.btnContainer}>
+            {currentStep > 1 && currentStep < steps.length && (
+              <Button
+                title="BACK"
+                width={width * 0.44}
+                onPress={handleBack}
+                backgroundColor={theme.colors.primary}
+                textColor={theme.colors.white}
+              />
             )}
-          />
-        </Animatable.View>
+            <Button
+              title={
+                currentStep === 2
+                  ? 'VERIFY'
+                  : currentStep === 4
+                  ? 'SIGNUP'
+                  : 'NEXT'
+              }
+              width={
+                currentStep === 1 || currentStep === steps.length
+                  ? width * 0.95
+                  : width * 0.44
+              }
+              onPress={handleRegister}
+              disabled={!isButtonEnabled}
+              backgroundColor={theme.colors.primary}
+              textColor={theme.colors.white}
+            />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   };
@@ -854,10 +889,74 @@ const Signup = () => {
         return renderDetailStep();
       case 4:
         return renderInterestStep();
-      case 5:
-        return renderCompleteStep();
       default:
         return null;
+    }
+  };
+
+  const handleRegister = async () => {
+    if (
+      selectedInterests.length &&
+      phone &&
+      password &&
+      firstName &&
+      lastName &&
+      gender &&
+      dob &&
+      email
+    ) {
+      const formData = new FormData();
+      formData.append('phone', phone);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('gender', gender);
+      formData.append('dob', dob);
+      formData.append('email', email);
+      formData.append('password', password);
+
+      selectedInterests.forEach((item, index) => {
+        formData.append(`interests[${index}]`, item);
+      });
+
+      if (newImageURL) {
+        const uriParts = newImageURL.split('/');
+        const fileName = uriParts[uriParts.length - 1];
+        const fileType = fileName.split('.').pop();
+
+        formData.append('profilePicture', {
+          uri: newImageURL,
+          name: fileName,
+          type: `image/${fileType}`,
+        });
+      }
+
+      console.log('Register FormData:', formData);
+
+      setLoading(true);
+      setShowRegisterAuthModal(true);
+      try {
+        const resultAction = await dispatch(registerUser(formData));
+        console.log('Dispatch Result:', resultAction);
+
+        if (registerUser.fulfilled.match(resultAction)) {
+          console.log('Registration successful');
+          setShowRegisterAuthModal(false);
+          setShowRegisterSuccessModal(true);
+          setTimeout(() => {
+            setShowRegisterSuccessModal(false);
+            setCurrentStep(5);
+          }, 3000);
+        } else {
+          console.log('Registration failed (rejected case):', resultAction);
+        }
+      } catch (err) {
+        console.error('Registration error caught:', err);
+        setShowRegisterAuthModal(false);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      console.log('Missing required registration fields');
     }
   };
 
@@ -892,6 +991,22 @@ const Signup = () => {
         animationSource={require('../../assets/animations/success.json')}
       />
 
+      <CustomModal
+        visible={showRegisterAuthModal}
+        title="Working!"
+        description="Please wait while we creating your account"
+        animationSource={require('../../assets/animations/email.json')}
+        onClose={() => setShowRegisterAuthModal(false)}
+      />
+
+      <CustomModal
+        visible={showRegisterSuccessModal}
+        title="Success!"
+        description="Registration Successful"
+        animationSource={require('../../assets/animations/success.json')}
+        onClose={() => setShowRegisterSuccessModal(false)}
+      />
+
       <ImageUploadModal
         visible={showImageUploadModal}
         onClose={() => setShowImageUploadModal(false)}
@@ -918,22 +1033,6 @@ const styles = StyleSheet.create({
   primaryContainer: {
     flex: 1,
     paddingHorizontal: width * 0.024,
-  },
-
-  interestItem: {
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  interestText: {
-    fontSize: 18,
-    color: '#333',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   headerContainer: {
