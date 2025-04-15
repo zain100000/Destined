@@ -174,7 +174,7 @@ const Signup = () => {
 
     {
       label: 'Male',
-      value: 'male',
+      value: 'MALE',
       icon: () => (
         <MaterialCommunityIcons
           name="gender-male"
@@ -185,7 +185,7 @@ const Signup = () => {
     },
     {
       label: 'Female',
-      value: 'female',
+      value: 'FEMALE',
       icon: () => (
         <MaterialCommunityIcons
           name="gender-female"
@@ -856,27 +856,106 @@ const Signup = () => {
               />
             )}
             <Button
-              title={
-                currentStep === 2
-                  ? 'VERIFY'
-                  : currentStep === 4
-                  ? 'SIGNUP'
-                  : 'NEXT'
-              }
-              width={
-                currentStep === 1 || currentStep === steps.length
-                  ? width * 0.95
-                  : width * 0.44
-              }
+              title="SIGNUP"
+              width={width * 0.44}
               onPress={handleRegister}
               disabled={!isButtonEnabled}
               backgroundColor={theme.colors.primary}
               textColor={theme.colors.white}
+              loading={loading}
             />
           </View>
         </ScrollView>
       </SafeAreaView>
     );
+  };
+
+  const handleRegister = async () => {
+    console.log('--- handleRegister started ---');
+
+    // Debug all required fields
+    console.log('Field states:', {
+      phone: !!phone,
+      firstName: !!firstName,
+      lastName: !!lastName,
+      email: !!email,
+      gender: !!gender,
+      dob: !!dob,
+      password: password.length >= 6,
+      interests: selectedInterests.length > 0,
+    });
+
+    if (
+      !selectedInterests.length ||
+      !phone ||
+      !firstName ||
+      !lastName ||
+      !email ||
+      !gender ||
+      !dob ||
+      password.length < 6
+    ) {
+      console.warn('Validation failed');
+      return;
+    }
+
+    const formData = new FormData();
+
+    // Append all fields properly
+    formData.append('phone', phone);
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('gender', gender);
+    formData.append('dob', moment(dob).format('YYYY-MM-DD')); // Proper date formatting
+    formData.append('email', email);
+    formData.append('password', password);
+
+    // Append interests correctly
+    selectedInterests.forEach((item, index) => {
+      const interestValue = item.replace(/_/g, ' ');
+      formData.append(`interests[${index}][interest]`, interestValue);
+      formData.append(`interests[${index}][selectedOption]`, interestValue);
+    });
+
+    // Handle profile picture upload
+    if (newImageURL) {
+      const uriParts = newImageURL.split('/');
+      const fileName = uriParts[uriParts.length - 1];
+      const fileType = fileName.split('.').pop();
+
+      formData.append('profilePicture', {
+        uri: newImageURL,
+        name: fileName,
+        type: `image/${fileType}`,
+      });
+    }
+
+    console.log('FormData contents:');
+    for (let [key, value] of formData._parts) {
+      console.log(key, value);
+    }
+
+    try {
+      setLoading(true);
+      console.log('Dispatching registerUser...');
+      const resultAction = await dispatch(registerUser(formData));
+
+      if (registerUser.fulfilled.match(resultAction)) {
+        console.log('Registration success!', resultAction.payload);
+        setShowRegisterSuccessModal(true);
+      } else {
+        console.warn('Registration failed:', resultAction.error);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Add user feedback here
+      Alert.alert(
+        'Registration Failed',
+        'Could not connect to server. Please check your internet connection.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderContent = () => {
@@ -891,72 +970,6 @@ const Signup = () => {
         return renderInterestStep();
       default:
         return null;
-    }
-  };
-
-  const handleRegister = async () => {
-    if (
-      selectedInterests.length &&
-      phone &&
-      password &&
-      firstName &&
-      lastName &&
-      gender &&
-      dob &&
-      email
-    ) {
-      const formData = new FormData();
-      formData.append('phone', phone);
-      formData.append('firstName', firstName);
-      formData.append('lastName', lastName);
-      formData.append('gender', gender);
-      formData.append('dob', dob);
-      formData.append('email', email);
-      formData.append('password', password);
-
-      selectedInterests.forEach((item, index) => {
-        formData.append(`interests[${index}]`, item);
-      });
-
-      if (newImageURL) {
-        const uriParts = newImageURL.split('/');
-        const fileName = uriParts[uriParts.length - 1];
-        const fileType = fileName.split('.').pop();
-
-        formData.append('profilePicture', {
-          uri: newImageURL,
-          name: fileName,
-          type: `image/${fileType}`,
-        });
-      }
-
-      console.log('Register FormData:', formData);
-
-      setLoading(true);
-      setShowRegisterAuthModal(true);
-      try {
-        const resultAction = await dispatch(registerUser(formData));
-        console.log('Dispatch Result:', resultAction);
-
-        if (registerUser.fulfilled.match(resultAction)) {
-          console.log('Registration successful');
-          setShowRegisterAuthModal(false);
-          setShowRegisterSuccessModal(true);
-          setTimeout(() => {
-            setShowRegisterSuccessModal(false);
-            setCurrentStep(5);
-          }, 3000);
-        } else {
-          console.log('Registration failed (rejected case):', resultAction);
-        }
-      } catch (err) {
-        console.error('Registration error caught:', err);
-        setShowRegisterAuthModal(false);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      console.log('Missing required registration fields');
     }
   };
 

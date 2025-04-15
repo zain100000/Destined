@@ -37,6 +37,36 @@ exports.registerUser = async (req, res) => {
       });
     }
 
+    let userAge;
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+      userAge = age;
+    } else if (age) {
+      userAge = parseInt(age);
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Date of birth or age is required",
+      });
+    }
+
+    if (userAge < 18) {
+      return res.status(403).json({
+        success: false,
+        message: "You must be at least 18 years old to register",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let userProfileImageUrl = null;
@@ -48,16 +78,6 @@ exports.registerUser = async (req, res) => {
       userProfileImageUrl = uploadResult.url;
     }
 
-    let calculatedAge = null;
-    if (dob) {
-      const birthDate = new Date(dob);
-      const ageInMillis = Date.now() - birthDate.getTime();
-      const ageDate = new Date(ageInMillis);
-      calculatedAge = Math.abs(ageDate.getUTCFullYear() - 1970);
-    } else {
-      calculatedAge = age;
-    }
-
     const user = new User({
       profilePicture: userProfileImageUrl,
       firstName,
@@ -67,7 +87,7 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       gender,
       dob,
-      age: calculatedAge,
+      age: userAge,
       interests,
       lastActive,
       role: "USER",
@@ -76,7 +96,7 @@ exports.registerUser = async (req, res) => {
     });
 
     await user.save();
-    verifiedPhones.delete(phone); // Clean up after success
+    verifiedPhones.delete(phone);
 
     res.status(200).json({
       success: true,
@@ -417,10 +437,14 @@ exports.setUserOffline = async (req, res) => {
 // Get User Status
 exports.getUserStatus = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("isOnline lastActive");
+    const user = await User.findById(req.params.id).select(
+      "isOnline lastActive"
+    );
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({
