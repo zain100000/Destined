@@ -1,9 +1,19 @@
-export const validateName = name => {
-  if (!name) {
-    return 'Name is required';
+export const validateFirstName = firstName => {
+  if (!firstName) {
+    return 'First Name is required';
   }
-  if (name.length < 4) {
-    return 'Name is at least 4 characters long';
+  if (firstName.length < 4) {
+    return 'First Name is at least 4 characters long';
+  }
+  return '';
+};
+
+export const validateLastName = lastName => {
+  if (!lastName) {
+    return 'Last Name is required';
+  }
+  if (lastName.length < 4) {
+    return 'Last Name is at least 4 characters long';
   }
   return '';
 };
@@ -40,12 +50,29 @@ export const validatePhone = phone => {
   return '';
 };
 
+export const validateGender = gender => {
+  if (!gender || gender === '') {
+    return 'Please select a gender';
+  }
+  return ''; // Valid if not empty or undefined
+};
+
+export const validateDob = dob => {
+  if (!dob) {
+    return 'Date of Birth is required';
+  }
+  return '';
+};
+
 export const validateFields = fields => {
   const validationFunctions = {
+    firstName: validateFirstName,
+    lastName: validateLastName,
     email: validateEmail,
     password: validatePassword,
-    fullName: validateName,
     phone: validatePhone,
+    gender: validateGender,
+    dob: validateDob,
   };
 
   const errors = {};

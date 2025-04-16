@@ -21,7 +21,16 @@ import {LinearGradient} from 'react-native-linear-gradient';
 import {theme} from '../../styles/theme';
 import {globalStyles} from '../../styles/globalStyles';
 import AuthHeader from '../../utils/customComponents/customHeader/AuthHeader';
-import {validatePhone} from '../../utils/customValidations/Validations';
+import {
+  validatePhone,
+  validateFirstName,
+  validateLastName,
+  validateEmail,
+  validateGender,
+  validateDob,
+  validatePassword,
+  isValidInput,
+} from '../../utils/customValidations/Validations';
 import InputField from '../../utils/customComponents/customInputField/InputField';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Button from '../../utils/customComponents/customButton/Button';
@@ -34,11 +43,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import ImageUploadModal from '../../utils/customModals/ImageUploadModal';
 import InterestCard from '../../utils/customComponents/customCards/customInterestCard/InterestCard';
+import {useNavigation} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('screen');
 
 const Signup = () => {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
 
   const {interest} = useSelector(state => state.interest);
@@ -49,12 +60,10 @@ const Signup = () => {
 
   const isDark = colorScheme === 'dark';
   const [currentStep, setCurrentStep] = useState(1);
-  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [resendTimer, setResendTimer] = useState('');
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [newImageURL, setNewImageURL] = useState('');
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
@@ -63,13 +72,23 @@ const Signup = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const [phone, setPhone] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('');
   const [dob, setDOB] = useState('');
   const [password, setPassword] = useState('');
+  const [hidePassword, setHidePassword] = useState(true);
   const [selectedInterests, setSelectedInterests] = useState([]);
+
+  const [phoneError, setPhoneError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [genderError, setGenderError] = useState('');
+  const [dobError, setDobError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const [showRegisterAuthModal, setShowRegisterAuthModal] = useState(false);
   const [showRegisterSuccessModal, setShowRegisterSuccessModal] =
@@ -80,7 +99,7 @@ const Signup = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const steps = ['Phone', 'OTP', 'Details', 'Interest', 'Finish'];
+  const steps = ['Phone', 'OTP', 'Details', 'Interest'];
 
   const gradientColors = isDark
     ? [theme.darkMode.gradientPrimary, theme.darkMode.gradientSecondary]
@@ -114,29 +133,34 @@ const Signup = () => {
   }, [resendTimer, currentStep]);
 
   useEffect(() => {
-    if (currentStep === 1) {
-      setIsButtonEnabled(!phoneError && phone.length > 0);
-    } else if (currentStep === 2) {
-      setIsButtonEnabled(otp.every(digit => digit !== ''));
-    } else if (currentStep === 3) {
-      const allFieldsFilled =
-        firstName !== '' &&
-        lastName !== '' &&
-        email !== '' &&
-        gender !== '' &&
-        dob !== '' &&
-        password.length >= 6;
-      setIsButtonEnabled(allFieldsFilled);
-    }
+    const hasErrors =
+      phoneError ||
+      firstNameError ||
+      lastNameError ||
+      emailError ||
+      genderError || // This will trigger the button disabling if there's a gender error
+      dobError ||
+      passwordError ||
+      !firstName ||
+      !lastName ||
+      !email ||
+      !gender || // Check for an empty gender as well
+      !dob ||
+      !password;
+
+    setIsButtonEnabled(!hasErrors);
   }, [
-    currentStep,
-    phone,
     phoneError,
-    otp,
+    firstNameError,
+    lastNameError,
+    emailError,
+    genderError, // Watch for genderError here
+    dobError,
+    passwordError,
     firstName,
     lastName,
     email,
-    gender,
+    gender, // Watch for gender change as well
     dob,
     password,
   ]);
@@ -208,24 +232,56 @@ const Signup = () => {
     }
   };
 
-  const handleGenderChange = selectedValue => {
-    setGender(selectedValue);
-  };
-
   const handlePhoneChange = value => {
     setPhone(value);
     setPhoneError(validatePhone(value));
   };
 
+  const handleFirstNameChange = value => {
+    setFirstName(value);
+    setFirstNameError(validateFirstName(value));
+  };
+
+  const handleLastNameChange = value => {
+    setLastName(value);
+    setLastNameError(validateLastName(value));
+  };
+
+  const handleEmailChange = value => {
+    setEmail(value);
+    setEmailError(validateEmail(value));
+  };
+
+  const handleGenderChange = value => {
+    setGender(value); // Update gender value
+    const error = validateGender(value); // Validate gender
+    setGenderError(error); // Update gender error state
+  };
+
+  const handleDobChange = value => {
+    setDOB(value);
+    setDobError(validateDob(value));
+  };
+
+  const handlePasswordChange = value => {
+    setPassword(value);
+    setPasswordError(validatePassword(value));
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
-      if (phoneError) return;
+      const phoneValidationError = validatePhone(phone);
+      setPhoneError(phoneValidationError);
+
+      if (phoneValidationError) return;
+
       dispatch(sendOTP({phone}))
         .unwrap()
         .then(res => {
           setGeneratedOtp(res.otp);
         });
-      setCurrentStep(prev => Math.min(prev + 1, steps.length));
+
+      setCurrentStep(prev => Math.min(prev + 1, steps.length + 1));
       return;
     }
 
@@ -234,7 +290,7 @@ const Signup = () => {
       return;
     }
 
-    setCurrentStep(prev => Math.min(prev + 1, steps.length));
+    setCurrentStep(prev => Math.min(prev + 1, steps.length + 1));
   };
 
   const handleBack = () => {
@@ -280,7 +336,7 @@ const Signup = () => {
           setShowSuccessModal(true);
           setTimeout(() => {
             setShowSuccessModal(false);
-            setCurrentStep(prev => Math.min(prev + 1, steps.length));
+            setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
           }, 2000);
         } else {
           console.error('Invalid OTP');
@@ -411,15 +467,6 @@ const Signup = () => {
       {phoneError && <Text style={globalStyles.textError}>{phoneError}</Text>}
 
       <View style={styles.btnContainer}>
-        {currentStep > 1 && currentStep < steps.length && (
-          <Button
-            title="BACK"
-            width={width * 0.44}
-            onPress={handleBack}
-            backgroundColor={theme.colors.primary}
-            textColor={theme.colors.white}
-          />
-        )}
         <Button
           title={
             currentStep === 2
@@ -592,7 +639,7 @@ const Signup = () => {
             <Text
               style={[
                 styles.otpDescription,
-                {color: isDark ? theme.colors.lightGray : theme.colors.gray},
+                {color: isDark ? theme.colors.white : theme.colors.gray},
               ]}>
               Please Fill Up The Details To Register
             </Text>
@@ -630,6 +677,7 @@ const Signup = () => {
               <InputField
                 placeholder="Phone"
                 value={phone}
+                editable={false}
                 onChangeText={handlePhoneChange}
                 leftIcon={
                   <MaterialCommunityIcons
@@ -639,9 +687,6 @@ const Signup = () => {
                   />
                 }
               />
-              {phoneError && (
-                <Text style={globalStyles.textError}>{phoneError}</Text>
-              )}
             </Animatable.View>
 
             <Animatable.View
@@ -652,7 +697,7 @@ const Signup = () => {
               <InputField
                 placeholder="First Name"
                 value={firstName}
-                onChangeText={setFirstName}
+                onChangeText={handleFirstNameChange}
                 leftIcon={
                   <MaterialCommunityIcons
                     name="account"
@@ -661,6 +706,9 @@ const Signup = () => {
                   />
                 }
               />
+              {firstNameError && (
+                <Text style={globalStyles.textError}>{firstNameError}</Text>
+              )}
             </Animatable.View>
 
             <Animatable.View
@@ -671,7 +719,7 @@ const Signup = () => {
               <InputField
                 placeholder="Last Name"
                 value={lastName}
-                onChangeText={setLastName}
+                onChangeText={handleLastNameChange}
                 leftIcon={
                   <MaterialCommunityIcons
                     name="account"
@@ -680,6 +728,9 @@ const Signup = () => {
                   />
                 }
               />
+              {lastNameError && (
+                <Text style={globalStyles.textError}>{lastNameError}</Text>
+              )}
             </Animatable.View>
 
             <Animatable.View
@@ -690,7 +741,7 @@ const Signup = () => {
               <InputField
                 placeholder="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 keyboardType="email-address"
                 leftIcon={
                   <MaterialCommunityIcons
@@ -700,6 +751,9 @@ const Signup = () => {
                   />
                 }
               />
+              {emailError && (
+                <Text style={globalStyles.textError}>{emailError}</Text>
+              )}
             </Animatable.View>
 
             <Animatable.View
@@ -712,6 +766,9 @@ const Signup = () => {
                 onValueChange={handleGenderChange}
                 dropdownOptions={genderOptions()}
               />
+              {genderError && (
+                <Text style={globalStyles.textError}>{genderError}</Text>
+              )}
             </Animatable.View>
 
             <Animatable.View
@@ -739,6 +796,9 @@ const Signup = () => {
                   }
                 />
               </TouchableOpacity>
+              {dobError && (
+                <Text style={globalStyles.textError}>{dobError}</Text>
+              )}
             </Animatable.View>
 
             <Animatable.View
@@ -749,8 +809,8 @@ const Signup = () => {
               <InputField
                 placeholder="Password"
                 value={password}
-                onChangeText={setPassword}
-                secureTextEntry={true}
+                onChangeText={handlePasswordChange}
+                secureTextEntry={hidePassword}
                 leftIcon={
                   <MaterialCommunityIcons
                     name="lock"
@@ -760,12 +820,16 @@ const Signup = () => {
                 }
                 rightIcon={
                   <MaterialCommunityIcons
-                    name="eye-off"
-                    size={width * 0.05}
+                    name={hidePassword ? 'eye-off' : 'eye'}
+                    size={width * 0.054}
                     color={theme.colors.primary}
                   />
                 }
+                onRightIconPress={() => setHidePassword(!hidePassword)}
               />
+              {passwordError && (
+                <Text style={globalStyles.textError}>{passwordError}</Text>
+              )}
             </Animatable.View>
           </View>
 
@@ -825,7 +889,7 @@ const Signup = () => {
             <Text
               style={[
                 styles.otpDescription,
-                {color: isDark ? theme.colors.lightGray : theme.colors.gray},
+                {color: isDark ? theme.colors.white : theme.colors.gray},
               ]}>
               Share your interests with others
             </Text>
@@ -846,7 +910,7 @@ const Signup = () => {
           </Animatable.View>
 
           <View style={styles.btnContainer}>
-            {currentStep > 1 && currentStep < steps.length && (
+            {currentStep > 1 && currentStep <= steps.length && (
               <Button
                 title="BACK"
                 width={width * 0.44}
@@ -862,7 +926,6 @@ const Signup = () => {
               disabled={!isButtonEnabled}
               backgroundColor={theme.colors.primary}
               textColor={theme.colors.white}
-              loading={loading}
             />
           </View>
         </ScrollView>
@@ -871,58 +934,61 @@ const Signup = () => {
   };
 
   const handleRegister = async () => {
-    console.log('--- handleRegister started ---');
+    // Validate all fields
+    const validationErrors = {
+      phone: validatePhone(phone),
+      firstName: validateFirstName(firstName),
+      lastName: validateLastName(lastName),
+      email: validateEmail(email),
+      gender: validateGender(gender),
+      dob: validateDob(dob),
+      password: validatePassword(password),
+    };
 
-    // Debug all required fields
-    console.log('Field states:', {
-      phone: !!phone,
-      firstName: !!firstName,
-      lastName: !!lastName,
-      email: !!email,
-      gender: !!gender,
-      dob: !!dob,
-      password: password.length >= 6,
-      interests: selectedInterests.length > 0,
-    });
+    // Check if any validation errors exist
+    const hasErrors = Object.values(validationErrors).some(
+      error => error !== '',
+    );
 
-    if (
-      !selectedInterests.length ||
-      !phone ||
-      !firstName ||
-      !lastName ||
-      !email ||
-      !gender ||
-      !dob ||
-      password.length < 6
-    ) {
-      console.warn('Validation failed');
+    // Validate interests
+    if (selectedInterests.length === 0) {
+      Alert.alert('Error', 'Please select at least one interest');
       return;
     }
 
-    const formData = new FormData();
+    if (hasErrors) {
+      // Show first error found
+      const firstError = Object.values(validationErrors).find(
+        error => error !== '',
+      );
+      if (firstError) {
+        Alert.alert('Validation Error', firstError);
+      }
+      return;
+    }
 
-    // Append all fields properly
+    // Prepare form data
+    const formData = new FormData();
     formData.append('phone', phone);
     formData.append('firstName', firstName);
     formData.append('lastName', lastName);
     formData.append('gender', gender);
-    formData.append('dob', moment(dob).format('YYYY-MM-DD')); // Proper date formatting
+    formData.append('dob', moment(dob).format('YYYY-MM-DD'));
     formData.append('email', email);
     formData.append('password', password);
 
-    // Append interests correctly
+    // Add interests
     selectedInterests.forEach((item, index) => {
       const interestValue = item.replace(/_/g, ' ');
       formData.append(`interests[${index}][interest]`, interestValue);
       formData.append(`interests[${index}][selectedOption]`, interestValue);
     });
 
-    // Handle profile picture upload
+    // Add profile picture if exists
     if (newImageURL) {
       const uriParts = newImageURL.split('/');
       const fileName = uriParts[uriParts.length - 1];
       const fileType = fileName.split('.').pop();
-
       formData.append('profilePicture', {
         uri: newImageURL,
         name: fileName,
@@ -930,28 +996,34 @@ const Signup = () => {
       });
     }
 
-    console.log('FormData contents:');
-    for (let [key, value] of formData._parts) {
-      console.log(key, value);
-    }
-
     try {
       setLoading(true);
-      console.log('Dispatching registerUser...');
+      setShowRegisterAuthModal(true);
+
       const resultAction = await dispatch(registerUser(formData));
 
       if (registerUser.fulfilled.match(resultAction)) {
-        console.log('Registration success!', resultAction.payload);
+        setShowRegisterAuthModal(false);
         setShowRegisterSuccessModal(true);
+
+        setTimeout(() => {
+          setShowRegisterSuccessModal(false);
+          navigation.replace('Signin');
+        }, 3000);
       } else {
-        console.warn('Registration failed:', resultAction.error);
+        setShowRegisterAuthModal(false);
+        Alert.alert(
+          'Error',
+          resultAction.error?.message ||
+            'Registration failed. Please try again.',
+        );
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      // Add user feedback here
+      setShowRegisterAuthModal(false);
       Alert.alert(
         'Registration Failed',
-        'Could not connect to server. Please check your internet connection.',
+        error.message ||
+          'Could not connect to server. Please check your internet connection.',
       );
     } finally {
       setLoading(false);
@@ -1015,7 +1087,7 @@ const Signup = () => {
       <CustomModal
         visible={showRegisterSuccessModal}
         title="Success!"
-        description="Registration Successful"
+        description="Account Created Successfully! Wait for the admin approval!"
         animationSource={require('../../assets/animations/success.json')}
         onClose={() => setShowRegisterSuccessModal(false)}
       />
@@ -1072,7 +1144,7 @@ const styles = StyleSheet.create({
   stepTrack: {
     position: 'absolute',
     height: height * 0,
-    width: width * 1.1,
+    width: width * 0.9,
   },
 
   stepProgress: {
