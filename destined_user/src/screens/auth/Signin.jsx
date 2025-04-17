@@ -40,6 +40,7 @@ const Signin = () => {
   const [hidePassword, setHidePassword] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,26 +73,46 @@ const Signin = () => {
   };
 
   const handleLogin = async () => {
-    if (isValidInput(phone, password)) {
-      setLoading(true);
-      setShowAuthModal(true);
-      try {
-        const resultAction = await dispatch(loginUser({phone, password}));
-        if (loginUser.fulfilled.match(resultAction)) {
-          setShowAuthModal(false);
-          setShowSuccessModal(true);
-          setPhone('');
-          setPassword('');
-          setTimeout(() => {
-            setShowSuccessModal(false);
-            navigation.replace('Main');
-          }, 3000);
-        }
-      } catch (err) {
+    if (!isValidInput(phone, password)) return;
+
+    setLoading(true);
+    setShowAuthModal(true);
+
+    try {
+      const resultAction = await dispatch(loginUser({phone, password}));
+
+      
+      if (loginUser.fulfilled.match(resultAction)) {
         setShowAuthModal(false);
-      } finally {
-        setLoading(false);
+        setShowSuccessModal(true);
+        setPhone('');
+        setPassword('');
+
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigation.replace('Main');
+        }, 3000);
+      } else {
+        
+        setShowAuthModal(false);
+        setShowErrorModal(true);
+
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       }
+    } catch (err) {
+      
+      console.error('Login error:', err);
+      setShowAuthModal(false);
+      setShowErrorModal(true);
+
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+      setShowAuthModal(false); 
     }
   };
 
@@ -236,6 +257,14 @@ const Signin = () => {
         description="Login successfully"
         animationSource={require('../../assets/animations/success.json')}
         onClose={() => setShowSuccessModal(false)}
+      />
+
+      <CustomModal
+        visible={showErrorModal}
+        title="Error!"
+        description="Cannot Login! Your profile is under review by super admin"
+        animationSource={require('../../assets/animations/error.json')}
+        onClose={() => setShowErrorModal(false)}
       />
     </LinearGradient>
   );

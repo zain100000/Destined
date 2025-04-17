@@ -29,7 +29,6 @@ import {
   validateGender,
   validateDob,
   validatePassword,
-  isValidInput,
 } from '../../utils/customValidations/Validations';
 import InputField from '../../utils/customComponents/customInputField/InputField';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -232,9 +231,9 @@ const Signup = () => {
     }
   };
 
-  const handlePhoneChange = value => {
-    setPhone(value);
-    setPhoneError(validatePhone(value));
+  const handlePhoneChange = text => {
+    setPhone(text);
+    setPhoneError(validatePhone(text));
   };
 
   const handleFirstNameChange = value => {
@@ -267,6 +266,11 @@ const Signup = () => {
     setPassword(value);
     setPasswordError(validatePassword(value));
   };
+
+  useEffect(() => {
+    const isValid = !validatePhone(phone); // If no error, then valid
+    setIsButtonEnabled(isValid);
+  }, [phone]);
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -1153,7 +1157,7 @@ const styles = StyleSheet.create({
 
   stepCircle: {
     width: width * 0.08,
-    height: height * 0.04,
+    height: height * 0.034,
     borderRadius: theme.borderRadius.circle,
     justifyContent: 'center',
     alignItems: 'center',
