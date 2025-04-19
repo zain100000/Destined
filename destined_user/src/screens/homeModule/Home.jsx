@@ -15,6 +15,7 @@ import Header from '../../utils/customComponents/customHeader/Header';
 import {useDispatch, useSelector} from 'react-redux';
 import {getUser} from '../../redux/slices/userSlice';
 import {getProfileMatch} from '../../redux/slices/profileMatchSlice';
+import {likeUser, dislikeUser} from '../../redux/slices/likingSlice';
 import ProfileCard from '../../utils/customComponents/customCards/customProfileCard/ProfileCard';
 import Loader from '../../utils/customComponents/customLoader/Loader';
 
@@ -39,6 +40,8 @@ const Home = () => {
     state => state.profileMatch.profileMatch,
   );
   const loading = useSelector(state => state.profileMatch.loading);
+
+  console.log('PRofile MAtch', profileMatchUser);
 
   const [refreshing, setRefreshing] = useState(false);
   const [shuffledProfiles, setShuffledProfiles] = useState([]);
@@ -72,6 +75,28 @@ const Home = () => {
       });
     }
   }, [dispatch, user]);
+
+  const handleLike = targetUserId => {
+    if (targetUserId === user?.id) {
+      console.warn("You can't like yourself!");
+      return;
+    }
+    dispatch(likeUser({userId: user?.id, targetUserId}))
+      .unwrap()
+      .then(response => console.log('✅ Like successful:', response))
+      .catch(error => console.log('❌ Like failed:', error));
+  };
+
+  const handleDislike = targetUserId => {
+    if (targetUserId === user?.id) {
+      console.warn("You can't dislike yourself!");
+      return;
+    }
+    dispatch(dislikeUser({userId: user?.id, targetUserId}))
+      .unwrap()
+      .then(response => console.log('✅ Dislike successful:', response))
+      .catch(error => console.log('❌ Dislike failed:', error));
+  };
 
   const gradientColors = isDark
     ? [theme.darkMode.gradientPrimary, theme.darkMode.gradientSecondary]
@@ -121,6 +146,8 @@ const Home = () => {
               age={person.age}
               interests={person.sharedInterests}
               matchScore={person.matchScore}
+              onLikePress={() => handleLike(person._id)}
+              onDislikePress={() => handleDislike(person._id)}
             />
           ))
         )}

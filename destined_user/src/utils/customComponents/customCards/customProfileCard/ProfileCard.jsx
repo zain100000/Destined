@@ -1,4 +1,4 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useRef, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ const ProfileCard = ({
   matchScore,
   onDislikePress,
   onLikePress,
+  liked,
+  disliked,
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -113,7 +115,10 @@ const ProfileCard = ({
               </View>
               <View style={styles.actionButtons}>
                 <TouchableOpacity
-                  style={styles.dislikeButton}
+                  style={[
+                    styles.dislikeButton,
+                    disliked && styles.dislikeButtonActive,
+                  ]}
                   onPress={onDislikePress}>
                   <LinearGradient
                     colors={['#FF416C', '#FF4B2B']}
@@ -128,7 +133,7 @@ const ProfileCard = ({
                   </LinearGradient>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.likeButton}
+                  style={[styles.likeButton, liked && styles.likeButtonActive]}
                   onPress={onLikePress}>
                   <LinearGradient
                     colors={['#4AC29A', '#BDFFF3']}
@@ -291,6 +296,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
+  dislikeButtonActive: {
+    backgroundColor: '#FF4B2B',
+  },
+
   likeButton: {
     width: width * 0.12,
     height: width * 0.12,
@@ -300,6 +309,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+  },
+
+  likeButtonActive: {
+    backgroundColor: '#BDFFF3',
   },
 
   gradientButton: {
