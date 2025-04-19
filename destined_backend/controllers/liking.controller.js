@@ -141,7 +141,7 @@ exports.likeUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "User Liked Successfully",
-      data: {
+      liking: {
         isMatch: isMutualLike,
         currentUser: {
           _id: user._id,
@@ -163,8 +163,7 @@ exports.likeUser = async (req, res) => {
     console.error("Like error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error.message,
+      message: "Server error",
     });
   } finally {
     if (session) {
@@ -252,7 +251,7 @@ exports.dislikeUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "User dislike successfully",
-      data: {
+      liking: {
         currentUser: { _id: user._id },
         targetUser: { _id: targetUser._id },
       },
@@ -263,7 +262,6 @@ exports.dislikeUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message,
     });
   } finally {
     if (session) await session.endSession();
