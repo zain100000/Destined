@@ -8,68 +8,80 @@ import {
 } from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {theme} from '../../styles/theme';
-import Home from '../../screens/dashBoard/Home';
-import Menu from '../../screens/dashBoard/Menu';
-import Cart from '../../screens/cart/cartScreens/Cart';
-import Profile from '../../screens/profile/profileScreens/Profile';
+import Home from '../../screens/homeModule/Home';
+import Users from '../../screens/userModule/Users';
+import Chats from '../../screens/chatModule/Chats';
+import Profile from '../../screens/profileModule/Profile';
+import LinearGradient from 'react-native-linear-gradient';
 
 const Tab = createBottomTabNavigator();
 const {width, height} = Dimensions.get('screen');
 
-const AnimatedTabIcon = ({focused, source}) => {
+const AnimatedTabIcon = ({focused, source, isDark}) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
-  const colorScheme = useColorScheme();
 
   useEffect(() => {
     Animated.spring(scaleValue, {
       toValue: focused ? 1.2 : 1,
-      friction: 4,
+      friction: 5,
       useNativeDriver: true,
     }).start();
-  }, [focused, scaleValue]);
+  }, [focused]);
 
   return (
     <Animated.View
-      style={[styles.imageContainer, {transform: [{scale: scaleValue}]}]}>
-      <Image
-        source={source}
-        style={[
-          styles.image,
-          {
-            tintColor: focused ? theme.colors.primary : theme.colors.gray,
-          },
-        ]}
-      />
+      style={[styles.iconWrapper, {transform: [{scale: scaleValue}]}]}>
+      {focused && (
+        <LinearGradient
+          colors={
+            isDark
+              ? [
+                  theme.darkMode.gradientPrimary,
+                  theme.darkMode.gradientSecondary,
+                ]
+              : [
+                  theme.darkMode.gradientPrimary,
+                  theme.darkMode.gradientSecondary,
+                ]
+          }
+          style={styles.iconGlow}
+          start={{x: 0.2, y: 0.2}}
+          end={{x: 0.8, y: 0.8}}
+        />
+      )}
+      <Image source={source} style={[styles.icon]} />
     </Animated.View>
   );
 };
 
 const BottomNavigator = () => {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.gray,
+        tabBarShowLabel: false,
         tabBarStyle: [
           styles.tabBar,
           {
-            backgroundColor: theme.colors.white,
+            backgroundColor: isDark
+              ? theme.darkMode.secondaryDark
+              : theme.lightMode.gradientPrimary,
+            ...theme.elevation.depth3,
           },
         ],
-        tabBarLabelStyle: styles.tabBarLabel,
       }}>
       <Tab.Screen
         name="Home"
         component={Home}
         options={{
-          tabBarLabel: 'Home',
           tabBarIcon: ({focused}) => (
             <AnimatedTabIcon
               focused={focused}
+              isDark={isDark}
               source={
                 focused
                   ? require('../../assets/navigatorIcons/home-filled.png')
@@ -80,34 +92,34 @@ const BottomNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Categories"
-        component={Menu}
+        name="Users"
+        component={Users}
         options={{
-          tabBarLabel: 'Categories',
           tabBarIcon: ({focused}) => (
             <AnimatedTabIcon
               focused={focused}
+              isDark={isDark}
               source={
                 focused
-                  ? require('../../assets/navigatorIcons/menu-filled.png')
-                  : require('../../assets/navigatorIcons/menu.png')
+                  ? require('../../assets/navigatorIcons/user-filled.png')
+                  : require('../../assets/navigatorIcons/user.png')
               }
             />
           ),
         }}
       />
       <Tab.Screen
-        name="Cart"
-        component={Cart}
+        name="Chat"
+        component={Chats}
         options={{
-          tabBarLabel: 'Cart',
           tabBarIcon: ({focused}) => (
             <AnimatedTabIcon
               focused={focused}
+              isDark={isDark}
               source={
                 focused
-                  ? require('../../assets/navigatorIcons/cart-filled.png')
-                  : require('../../assets/navigatorIcons/cart.png')
+                  ? require('../../assets/navigatorIcons/chat-filled.png')
+                  : require('../../assets/navigatorIcons/chat.png')
               }
             />
           ),
@@ -117,10 +129,10 @@ const BottomNavigator = () => {
         name="Profile"
         component={Profile}
         options={{
-          tabBarLabel: 'Profile',
           tabBarIcon: ({focused}) => (
             <AnimatedTabIcon
               focused={focused}
+              isDark={isDark}
               source={
                 focused
                   ? require('../../assets/navigatorIcons/profile-filled.png')
@@ -138,30 +150,34 @@ export default BottomNavigator;
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: height * 0.074,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: -3},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    borderTopWidth: 0,
+    position: 'absolute',
+    left: width * 0.04,
+    right: width * 0.04,
+    height: height * 0.085,
+    paddingTop: height * 0.02,
   },
 
-  tabBarLabel: {
-    fontSize: theme.typography.fontSize.md,
-    fontFamily: theme.typography.fontFamilySemiBold,
-    marginTop: height * 0.009,
-  },
-
-  imageContainer: {
-    marginTop: height * 0.01,
+  iconWrapper: {
+    width: width * 0.04,
+    height: height * 0.04,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
 
-  image: {
-    width: width * 0.07,
-    height: height * 0.04,
+  icon: {
+    width: width * 0.065,
+    height: height * 0.035,
     resizeMode: 'contain',
+    zIndex: 10,
+  },
+
+  iconGlow: {
+    position: 'absolute',
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: theme.borderRadius.circle,
+    opacity: 0.4,
+    zIndex: 1,
   },
 });

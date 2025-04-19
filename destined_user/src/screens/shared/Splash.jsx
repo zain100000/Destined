@@ -35,15 +35,13 @@ const Splash = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
+        await new Promise(resolve => setTimeout(resolve, 3000));
         const token = await AsyncStorage.getItem('authToken');
-        console.log(token);
 
         if (token) {
           navigation.reset({
             index: 0,
-            routes: [{name: 'Home'}],
+            routes: [{name: 'Main'}],
           });
         } else {
           navigation.reset({
@@ -51,10 +49,7 @@ const Splash = () => {
             routes: [{name: 'OnBoard'}],
           });
         }
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) {}
     };
 
     checkSession();

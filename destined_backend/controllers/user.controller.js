@@ -172,6 +172,7 @@ exports.loginUser = async (req, res) => {
         message: "User Login Successfully",
         user: {
           id: user.id,
+          profilePicture: user.profilePicture,
           email: user.email,
           phone: user.phone,
           isOnline: user.isOnline, // Add isOnline here in the response

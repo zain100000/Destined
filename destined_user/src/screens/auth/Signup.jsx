@@ -1157,7 +1157,7 @@ const styles = StyleSheet.create({
 
   stepCircle: {
     width: width * 0.08,
-    height: height * 0.034,
+    height: height * 0.038,
     borderRadius: theme.borderRadius.circle,
     justifyContent: 'center',
     alignItems: 'center',

@@ -208,7 +208,7 @@ const OnBoarding = () => {
             />
           ) : (
             <>
-              <Button
+              {/* <Button
                 title="SKIP"
                 width={width * 0.44}
                 onPress={handleOnComplete}
@@ -221,7 +221,7 @@ const OnBoarding = () => {
                 onPress={goToNextSlide}
                 backgroundColor={isDark ? '#FF6B6B' : theme.colors.primary}
                 textColor={theme.colors.white}
-              />
+              /> */}
             </>
           )}
         </Animated.View>
