@@ -7,13 +7,24 @@ import {
   Dimensions,
   Animated,
   PanResponder,
+  TouchableOpacity,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {theme} from '../../../../styles/theme';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 
 const {width, height} = Dimensions.get('screen');
 
-const ProfileCard = ({name, age, color, image, interests = [], matchScore}) => {
+const ProfileCard = ({
+  name,
+  age,
+  color,
+  image,
+  interests = [],
+  matchScore,
+  onDislikePress,
+  onLikePress,
+}) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
   const scaleIn = useRef(new Animated.Value(0.95)).current;
@@ -93,11 +104,45 @@ const ProfileCard = ({name, age, color, image, interests = [], matchScore}) => {
       <View style={styles.bottomSection}>
         <View style={styles.profileRow}>
           <Image source={image} style={styles.profilePic} />
-          <View>
+          <View style={styles.profileInfo}>
             <Text style={styles.name}>{name}</Text>
-            <View style={styles.ageContainer}>
-              <Text style={styles.age}>{age}</Text>
-              <View style={styles.ageDecoration} />
+            <View style={styles.ageRow}>
+              <View style={styles.ageContainer}>
+                <Text style={styles.age}>{age}</Text>
+                <View style={styles.ageDecoration} />
+              </View>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.dislikeButton}
+                  onPress={onDislikePress}>
+                  <LinearGradient
+                    colors={['#FF416C', '#FF4B2B']}
+                    style={styles.gradientButton}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}>
+                    <SimpleLineIcons
+                      name="dislike"
+                      size={width * 0.06}
+                      color={theme.colors.white}
+                    />
+                  </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.likeButton}
+                  onPress={onLikePress}>
+                  <LinearGradient
+                    colors={['#4AC29A', '#BDFFF3']}
+                    style={styles.gradientButton}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}>
+                    <SimpleLineIcons
+                      name="like"
+                      size={width * 0.06}
+                      color={theme.colors.white}
+                    />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -175,10 +220,20 @@ const styles = StyleSheet.create({
     marginRight: width * 0.03,
   },
 
+  profileInfo: {
+    flex: 1,
+  },
+
   bottomSection: {
     position: 'absolute',
     bottom: height * 0.04,
     left: width * 0.05,
+    right: width * 0.05,
+  },
+
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
 
   name: {
@@ -188,10 +243,16 @@ const styles = StyleSheet.create({
     letterSpacing: theme.spacing(0.1),
   },
 
+  ageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: height * 0.008,
+  },
+
   ageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: height * 0.008,
   },
 
   age: {
@@ -211,6 +272,47 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     marginLeft: width * 0.02,
     opacity: 0.7,
+  },
+
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: width * 0.03,
+  },
+
+  dislikeButton: {
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: theme.borderRadius.circle,
+    shadowColor: '#FF416C',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  likeButton: {
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: theme.borderRadius.circle,
+    shadowColor: '#4AC29A',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  gradientButton: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.borderRadius.circle,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  buttonText: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: 'bold',
   },
 
   interests: {

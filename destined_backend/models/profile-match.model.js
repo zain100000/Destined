@@ -4,20 +4,17 @@ const profileMatchSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
 
   targetUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
 
   matchScore: {
     type: Number,
     min: 0,
     max: 100,
-    required: true,
   },
 
   sharedInterests: [
