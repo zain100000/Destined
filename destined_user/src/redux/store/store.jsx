@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {combineReducers} from 'redux';
 import authReducer from '../slices/authSlice';
 import userReducer from '../slices/userSlice';
+import profileMatchReducer from '../slices/profileMatchSlice';
 import interestReducer from '../slices/interestSlice';
 
 const persistConfig = {
@@ -15,6 +16,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   user: userReducer,
+  profileMatch: profileMatchReducer,
   interest: interestReducer,
 });
 

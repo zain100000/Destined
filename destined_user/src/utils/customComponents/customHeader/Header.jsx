@@ -20,6 +20,7 @@ const Header = ({
   onPressRight,
   profile,
   onPressProfile,
+  isOnline,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
@@ -72,7 +73,19 @@ const Header = ({
 
           {profile && (
             <TouchableOpacity onPress={onPressProfile} activeOpacity={0.8}>
-              <Image source={profile} style={styles.profile} />
+              <View style={styles.profileWrapper}>
+                <Image source={profile} style={styles.profile} />
+                <View
+                  style={[
+                    styles.onlineIndicator,
+                    {
+                      backgroundColor: isOnline
+                        ? theme.colors.success
+                        : theme.colors.disabled,
+                    },
+                  ]}
+                />
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -126,12 +139,25 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
+  profileWrapper: {
+    position: 'relative',
+  },
+
   profile: {
     width: width * 0.12,
     height: width * 0.12,
     resizeMode: 'cover',
     borderRadius: theme.borderRadius.circle,
     marginLeft: width * 0.02,
+  },
+
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: height * 0.048,
+    right: width * 0.0,
+    width: width * 0.028,
+    height: width * 0.028,
+    borderRadius: theme.borderRadius.circle,
   },
 
   title: {
