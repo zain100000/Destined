@@ -81,7 +81,6 @@ const Signin = () => {
     try {
       const resultAction = await dispatch(loginUser({phone, password}));
 
-      
       if (loginUser.fulfilled.match(resultAction)) {
         setShowAuthModal(false);
         setShowSuccessModal(true);
@@ -93,7 +92,6 @@ const Signin = () => {
           navigation.replace('Main');
         }, 3000);
       } else {
-        
         setShowAuthModal(false);
         setShowErrorModal(true);
 
@@ -102,7 +100,6 @@ const Signin = () => {
         }, 3000);
       }
     } catch (err) {
-      
       console.error('Login error:', err);
       setShowAuthModal(false);
       setShowErrorModal(true);
@@ -112,7 +109,7 @@ const Signin = () => {
       }, 3000);
     } finally {
       setLoading(false);
-      setShowAuthModal(false); 
+      setShowAuthModal(false);
     }
   };
 

@@ -172,7 +172,6 @@ exports.loginUser = async (req, res) => {
         message: "User Login Successfully",
         user: {
           id: user.id,
-          profilePicture: user.profilePicture,
           email: user.email,
           phone: user.phone,
           isOnline: user.isOnline, // Add isOnline here in the response
@@ -219,9 +218,10 @@ exports.getUserById = async (req, res) => {
 // Reset user password
 exports.resetUserPassword = async (req, res) => {
   try {
-    const { phone, newPassword } = req.body;
+    const { oldPassword, newPassword } = req.body;
 
-    let user = await User.findOne({ phone });
+    const userId = req.user.id;
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -229,8 +229,15 @@ exports.resetUserPassword = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Old Password is incorrect!",
+      });
+    }
 
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 

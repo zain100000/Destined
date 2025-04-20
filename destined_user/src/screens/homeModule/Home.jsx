@@ -36,12 +36,12 @@ const Home = () => {
   const isDark = colorScheme === 'dark';
 
   const user = useSelector(state => state.auth.user);
+  const userProfile = useSelector(state => state.user.user);
   const profileMatchUser = useSelector(
     state => state.profileMatch.profileMatch,
   );
-  const loading = useSelector(state => state.profileMatch.loading);
 
-  console.log('PRofile MAtch', profileMatchUser);
+  const loading = useSelector(state => state.profileMatch.loading);
 
   const [refreshing, setRefreshing] = useState(false);
   const [shuffledProfiles, setShuffledProfiles] = useState([]);
@@ -115,8 +115,8 @@ const Home = () => {
           logo={require('../../assets/icons/heart.png')}
           title="Destined"
           profile={
-            user?.profilePicture
-              ? {uri: user.profilePicture}
+            userProfile?.profilePicture
+              ? {uri: userProfile.profilePicture}
               : require('../../assets/placeholders/default-avatar.png')
           }
           isOnline={user?.isOnline}

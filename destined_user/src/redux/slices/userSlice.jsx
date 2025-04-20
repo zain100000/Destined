@@ -58,6 +58,31 @@ export const updateUser = createAsyncThunk(
   },
 );
 
+export const changePassword = createAsyncThunk(
+  'user/changePassword',
+  async ({userId, formData}, {rejectWithValue}) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.patch(
+        `${BASE_URL}/user/reset-user-password/${userId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data.user;
+    } catch (error) {
+      console.error('❌ Update failed:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  },
+);
+
 const userSlice = createSlice({
   name: 'user',
   initialState: {

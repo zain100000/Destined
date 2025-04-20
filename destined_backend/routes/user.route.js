@@ -34,10 +34,10 @@ router.post("/logout-user", protect, userController.logoutUser);
 // Route to delete user profile (requires authentication)
 router.delete("/delete-user/:id", protect, userController.deleteProfile);
 
-// Route to set user online 
+// Route to set user online
 router.post("/set-online-status", protect, userController.setUserOnline);
 
-// Route to set user offline 
+// Route to set user offline
 router.post("/set-offline-status", protect, userController.setUserOffline);
 
 // Route to get user status

@@ -75,11 +75,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.gap(0.4),
   },
 
   imgContainer: {
-    width: width * 0.18,
-    height: width * 0.18,
+    width: width * 0.14,
+    height: width * 0.14,
     borderRadius: theme.borderRadius.circle,
     overflow: 'hidden',
   },
@@ -95,8 +96,8 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontSize: theme.typography.fontSize.lg,
-    fontFamily: theme.typography.fontFamilyBold,
+    fontSize: theme.typography.fontSize.md,
+    fontFamily: theme.typography.fontFamilySemiBold,
     color: theme.colors.dark,
   },
 
