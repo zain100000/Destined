@@ -39,14 +39,19 @@ exports.likeUser = async (req, res) => {
         .json({ success: false, message: "Cannot interact with yourself" });
     }
 
-    const [user, targetUser, existingTargetLike] = await Promise.all([
-      User.findById(trimmedUserId).session(session),
-      User.findById(trimmedTargetUserId).session(session),
-      Liking.findOne({
-        user: trimmedTargetUserId,
-        targetUserId: trimmedUserId,
-      }).session(session),
-    ]);
+    const [user, targetUser, existingTargetLike, existingUserLike] =
+      await Promise.all([
+        User.findById(trimmedUserId).session(session),
+        User.findById(trimmedTargetUserId).session(session),
+        Liking.findOne({
+          user: trimmedTargetUserId,
+          targetUserId: trimmedUserId,
+        }).session(session),
+        Liking.findOne({
+          user: trimmedUserId,
+          targetUserId: trimmedTargetUserId,
+        }).session(session),
+      ]);
 
     if (!user || !targetUser) {
       await session.abortTransaction();
@@ -56,6 +61,7 @@ exports.likeUser = async (req, res) => {
     }
 
     const isMutualLike = existingTargetLike?.action === "LIKE";
+    const wasAlreadyLiked = existingUserLike?.action === "LIKE";
 
     const likingData = {
       user: trimmedUserId,
@@ -68,24 +74,27 @@ exports.likeUser = async (req, res) => {
       likingData.matches = [trimmedTargetUserId];
     }
 
-    const updatedLiking = await Liking.findOneAndUpdate(
+    await Liking.findOneAndUpdate(
       { user: trimmedUserId, targetUserId: trimmedTargetUserId },
-      {
-        $set: likingData,
-        $inc: { totalLikes: 1 },
-      },
-      { new: true, upsert: true, session }
+      { $set: likingData, $inc: { totalLikes: 1 } },
+      { upsert: true, session }
     );
 
-    if (isMutualLike) {
-      await Promise.all([
-        Liking.updateOne(
-          { user: trimmedTargetUserId, targetUserId: trimmedUserId },
-          { $addToSet: { matches: trimmedUserId } },
-          { session }
-        ),
-      ]);
+    // Update targetUser's totalLikes only if this is a new LIKE (not a re-like)
+    if (!wasAlreadyLiked) {
+      targetUser.totalLikes = (targetUser.totalLikes || 0) + 1;
     }
+
+    // Add match to reverse side if mutual
+    if (isMutualLike) {
+      await Liking.updateOne(
+        { user: trimmedTargetUserId, targetUserId: trimmedUserId },
+        { $addToSet: { matches: trimmedUserId } },
+        { session }
+      );
+    }
+
+    await targetUser.save({ session });
 
     await session.commitTransaction();
     return res.status(200).json({
@@ -93,7 +102,8 @@ exports.likeUser = async (req, res) => {
       message: "User liked successfully",
       liking: {
         isMatch: isMutualLike,
-        data: updatedLiking,
+        userId: trimmedUserId,
+        targetUserId: trimmedTargetUserId,
       },
     });
   } catch (error) {
@@ -142,21 +152,46 @@ exports.dislikeUser = async (req, res) => {
         .json({ success: false, message: "Cannot interact with yourself" });
     }
 
+    const [user, targetUser, existingUserLike] = await Promise.all([
+      User.findById(trimmedUserId).session(session),
+      User.findById(trimmedTargetUserId).session(session),
+      Liking.findOne({
+        user: trimmedUserId,
+        targetUserId: trimmedTargetUserId,
+      }).session(session),
+    ]);
+
+    if (!user || !targetUser) {
+      await session.abortTransaction();
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const wasLiked = existingUserLike?.action === "LIKE";
+
+    // Update Liking record to DISLIKE and clear matches
     await Liking.findOneAndUpdate(
       { user: trimmedUserId, targetUserId: trimmedTargetUserId },
       {
-        $set: { action: "DISLIKE", createdAt: new Date(), matches: [] },
+        $set: { action: "DISLIKE", matches: [], createdAt: new Date() },
         $inc: { totalLikes: -1 },
       },
       { session }
     );
 
-    // Remove match from the reverse like if exists
+    // Remove this user from matches in the reverse Liking
     await Liking.updateOne(
       { user: trimmedTargetUserId, targetUserId: trimmedUserId },
       { $pull: { matches: trimmedUserId } },
       { session }
     );
+
+    // Decrease target user's totalLikes if this was previously liked
+    if (wasLiked) {
+      targetUser.totalLikes = Math.max((targetUser.totalLikes || 1) - 1, 0);
+      await targetUser.save({ session });
+    }
 
     await session.commitTransaction();
     return res.status(200).json({
