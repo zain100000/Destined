@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    likedByUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+
     liking: [
       {
         _id: {
@@ -80,11 +88,6 @@ const userSchema = new mongoose.Schema(
             default: [],
           },
         ],
-        totalLikes: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
         createdAt: {
           type: Date,
           default: Date.now,
@@ -98,25 +101,21 @@ const userSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
-
         targetUserId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
-
         matchScore: {
           type: Number,
           min: 0,
           max: 100,
         },
-
         sharedInterests: [
           {
             interest: String,
             selectedOption: String,
           },
         ],
-
         createdAt: {
           type: Date,
           default: Date.now,
@@ -151,17 +150,14 @@ const userSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
-
         type: {
           type: String,
           enum: ["IMAGE", "VIDEO"],
           required: true,
         },
-
         url: {
           type: String,
         },
-
         uploadedAt: {
           type: Date,
           default: Date.now,

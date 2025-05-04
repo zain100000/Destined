@@ -166,7 +166,7 @@ const likingSlice = createSlice({
         }
         state.loading = false;
       })
-      .addCase(likeUser.pending, state => {
+      .addCase(likeUser.rejected, state => {
         state.loading = true;
         state.error = null;
       })
@@ -189,7 +189,7 @@ const likingSlice = createSlice({
         }
         state.loading = false;
       })
-      .addCase(dislikeUser.pending, state => {
+      .addCase(dislikeUser.rejected, state => {
         state.loading = true;
         state.error = null;
       })

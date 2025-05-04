@@ -59,37 +59,37 @@ exports.likeUser = async (req, res) => {
       });
     }
 
-    if (!user.matches) user.matches = [];
-    if (!targetUser.matches) targetUser.matches = [];
-    if (!user.liking) user.liking = [];
-    if (!targetUser.liking) targetUser.liking = [];
+    // Check if this is a new like (not just updating from dislike)
+    const existingLike = await Liking.findOne({
+      user: trimmedUserId,
+      targetUserId: trimmedTargetUserId,
+    }).session(session);
 
-    const userLikeIndex = user.liking.findIndex(
-      (like) => like.targetUserId.toString() === trimmedTargetUserId
-    );
+    const isNewLike = !existingLike || existingLike.action !== "LIKE";
 
-    if (userLikeIndex !== -1) {
-      user.liking[userLikeIndex].action = "LIKE";
-      user.liking[userLikeIndex].createdAt = new Date();
-    } else {
-      user.liking.push({
-        targetUserId: trimmedTargetUserId,
-        action: "LIKE",
-        matches: [],
-        createdAt: new Date(),
-      });
+    // Create/update the like record
+    const likingData = {
+      user: trimmedUserId,
+      targetUserId: trimmedTargetUserId,
+      action: "LIKE",
+      targetUserStats: {
+        totalLikes: targetUser.totalLikesReceived,
+        likedByUsers: targetUser.likedByUsers,
+      },
+    };
+
+    if (isNewLike) {
+      // Update target user's like stats
+      targetUser.totalLikesReceived += 1;
+      if (!targetUser.likedByUsers.includes(trimmedUserId)) {
+        targetUser.likedByUsers.push(trimmedUserId);
+      }
     }
 
     const isMutualLike = existingTargetLike?.action === "LIKE";
 
-    const likingUpdate = {
-      user: trimmedUserId,
-      targetUserId: trimmedTargetUserId,
-      action: "LIKE",
-      createdAt: new Date(),
-    };
-
     if (isMutualLike) {
+      // Add to matches if not already matched
       if (!user.matches.includes(trimmedTargetUserId)) {
         user.matches.push(trimmedTargetUserId);
       }
@@ -97,46 +97,63 @@ exports.likeUser = async (req, res) => {
         targetUser.matches.push(trimmedUserId);
       }
 
-      const updatedUserLikeIndex = user.liking.findIndex(
-        (like) => like.targetUserId.toString() === trimmedTargetUserId
-      );
-      if (
-        updatedUserLikeIndex !== -1 &&
-        !user.liking[updatedUserLikeIndex].matches.includes(trimmedTargetUserId)
-      ) {
-        user.liking[updatedUserLikeIndex].matches.push(trimmedTargetUserId);
-      }
+      likingData.$addToSet = { matches: trimmedTargetUserId };
+    }
 
+    // Update or create the like record
+    const liking = await Liking.findOneAndUpdate(
+      { user: trimmedUserId, targetUserId: trimmedTargetUserId },
+      likingData,
+      { upsert: true, new: true, session }
+    );
+
+    // Update the user's liking array
+    const userLikeIndex = user.liking.findIndex(
+      (like) => like.targetUserId.toString() === trimmedTargetUserId
+    );
+
+    if (userLikeIndex !== -1) {
+      user.liking[userLikeIndex].action = "LIKE";
+      user.liking[userLikeIndex].createdAt = new Date();
+      if (
+        isMutualLike &&
+        !user.liking[userLikeIndex].matches.includes(trimmedTargetUserId)
+      ) {
+        user.liking[userLikeIndex].matches.push(trimmedTargetUserId);
+      }
+    } else {
+      user.liking.push({
+        targetUserId: trimmedTargetUserId,
+        action: "LIKE",
+        matches: isMutualLike ? [trimmedTargetUserId] : [],
+        createdAt: new Date(),
+      });
+    }
+
+    // Update target user's like if mutual
+    if (isMutualLike) {
       const targetLikeIndex = targetUser.liking.findIndex(
         (like) => like.targetUserId.toString() === trimmedUserId
       );
+
       if (
         targetLikeIndex !== -1 &&
         !targetUser.liking[targetLikeIndex].matches.includes(trimmedUserId)
       ) {
         targetUser.liking[targetLikeIndex].matches.push(trimmedUserId);
       }
-
-      await Liking.updateOne(
-        { user: trimmedTargetUserId, targetUserId: trimmedUserId },
-        { $addToSet: { matches: trimmedUserId } },
-        { session }
-      );
     }
 
-    if (isMutualLike) {
-      likingUpdate.$addToSet = { matches: trimmedTargetUserId };
-    }
-    await Liking.updateOne(
-      { user: trimmedUserId, targetUserId: trimmedTargetUserId },
-      likingUpdate,
-      { upsert: true, session }
-    );
-
-    await user.save({ session });
-    await targetUser.save({ session });
-
+    await Promise.all([user.save({ session }), targetUser.save({ session })]);
     await session.commitTransaction();
+
+    // Get complete like statistics for the target user
+    const targetUserLikeStats = {
+      totalLikes: targetUser.totalLikesReceived,
+      likedByUsers: await User.find({ _id: { $in: targetUser.likedByUsers } })
+        .select("firstName lastName profilePicture gender age")
+        .lean(),
+    };
 
     return res.status(200).json({
       success: true,
@@ -153,22 +170,20 @@ exports.likeUser = async (req, res) => {
         targetUser: {
           _id: targetUser._id,
           matches: targetUser.matches,
+          likeStats: targetUserLikeStats,
         },
+        likingRecord: liking,
       },
     });
   } catch (error) {
-    if (session) {
-      await session.abortTransaction();
-    }
+    if (session) await session.abortTransaction();
     console.error("Like error:", error);
     return res.status(500).json({
       success: false,
       message: "Server error",
     });
   } finally {
-    if (session) {
-      await session.endSession();
-    }
+    if (session) await session.endSession();
   }
 };
 
@@ -184,9 +199,10 @@ exports.dislikeUser = async (req, res) => {
 
     if (!userId || !targetUserId) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing user IDs" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing user IDs",
+      });
     }
 
     const trimmedUserId = userId.toString().trim();
@@ -197,90 +213,162 @@ exports.dislikeUser = async (req, res) => {
       !mongoose.Types.ObjectId.isValid(trimmedTargetUserId)
     ) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user ID format" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format",
+      });
     }
 
     if (trimmedUserId === trimmedTargetUserId) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Cannot interact with yourself" });
+      return res.status(400).json({
+        success: false,
+        message: "Cannot interact with yourself",
+      });
     }
 
-    const [user, targetUser] = await Promise.all([
+    const [user, targetUser, existingLike] = await Promise.all([
       User.findById(trimmedUserId).session(session),
       User.findById(trimmedTargetUserId).session(session),
+      Liking.findOne({
+        user: trimmedUserId,
+        targetUserId: trimmedTargetUserId,
+      }).session(session),
     ]);
 
     if (!user || !targetUser) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    if (!user.liking) user.liking = [];
-    if (!user.matches) user.matches = [];
-    if (!targetUser.matches) targetUser.matches = [];
+    const wasLike = existingLike?.action === "LIKE";
 
-    user.liking = user.liking.filter(
-      (like) => like.targetUserId.toString() !== trimmedTargetUserId
-    );
-    targetUser.matches = targetUser.matches.filter(
-      (match) => match.toString() !== trimmedUserId
-    );
-    user.matches = user.matches.filter(
-      (match) => match.toString() !== trimmedTargetUserId
-    );
+    if (wasLike) {
+      targetUser.totalLikesReceived = Math.max(
+        0,
+        targetUser.totalLikesReceived - 1
+      );
 
+      targetUser.likedByUsers = Array.isArray(targetUser.likedByUsers)
+        ? targetUser.likedByUsers.filter(
+            (id) => id.toString() !== trimmedUserId
+          )
+        : [];
+    }
+
+    // Remove matches if existed
+    user.matches = Array.isArray(user.matches)
+      ? user.matches.filter((match) => match.toString() !== trimmedTargetUserId)
+      : [];
+
+    targetUser.matches = Array.isArray(targetUser.matches)
+      ? targetUser.matches.filter((match) => match.toString() !== trimmedUserId)
+      : [];
+
+    // Remove from user's liking array
+    user.liking = Array.isArray(user.liking)
+      ? user.liking.filter(
+          (like) => like.targetUserId.toString() !== trimmedTargetUserId
+        )
+      : [];
+
+    // Delete the like document
     await Liking.deleteOne({
       user: trimmedUserId,
       targetUserId: trimmedTargetUserId,
     }).session(session);
-    await Liking.deleteOne({
-      user: trimmedTargetUserId,
-      targetUserId: trimmedUserId,
-    }).session(session);
 
     await Promise.all([user.save({ session }), targetUser.save({ session })]);
+
+    // Refresh like stats after update
+    const targetUserLikeStats = {
+      totalLikes: targetUser.totalLikesReceived,
+      likedByUsers: await User.find({
+        _id: { $in: targetUser.likedByUsers || [] },
+      })
+        .select("firstName lastName profilePicture gender age")
+        .lean(),
+    };
 
     await session.commitTransaction();
 
     return res.status(200).json({
       success: true,
-      message: "User dislike successfully",
+      message: "User disliked successfully",
       liking: {
-        currentUser: { _id: user._id },
-        targetUser: { _id: targetUser._id },
+        currentUser: {
+          _id: user._id,
+          matches: user.matches,
+        },
+        targetUser: {
+          _id: targetUser._id,
+          likeStats: targetUserLikeStats,
+        },
       },
     });
   } catch (error) {
-    if (session) await session.abortTransaction();
+    if (session) {
+      try {
+        await session.abortTransaction();
+      } catch (abortError) {
+        console.error("Error aborting transaction:", abortError);
+      }
+    }
     console.error("Dislike error:", error);
     return res.status(500).json({
       success: false,
       message: "Server error",
     });
   } finally {
-    if (session) await session.endSession();
+    if (session) {
+      await session.endSession();
+    }
   }
 };
 
-// Get All Liking
+// Get all likings
 exports.getAllLiking = async (req, res) => {
   try {
+    // Get all likings with populated user and target user data
     const likings = await Liking.find()
+      .populate("user")
       .populate("targetUserId")
-      .populate("user");
+      .lean();
+
+    // For each liking, get the current stats of the target user
+    const likingsWithStats = await Promise.all(
+      likings.map(async (liking) => {
+        const targetUser = await User.findById(liking.targetUserId)
+          .select("totalLikesReceived likedByUsers")
+          .populate("likedByUsers")
+          .lean();
+
+        // Merge current stats into targetUserStats
+        return {
+          ...liking,
+          targetUserStats: {
+            ...liking.targetUserStats,
+            // Override with current data
+            totalLikes: targetUser.totalLikesReceived,
+            likedByUsers: targetUser.likedByUsers,
+          },
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      message: "Likings Fetched Successfully",
-      likings,
+      message: "Likings fetched successfully with current stats",
+      likings: likingsWithStats,
     });
   } catch (error) {
-    console.error("❌ Error fetching liking data:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error fetching likings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
