@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {theme} from '../../../../styles/theme';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const {width, height} = Dimensions.get('screen');
 
@@ -22,10 +22,8 @@ const ProfileCard = ({
   image,
   interests = [],
   matchScore,
-  onDislikePress,
   onLikePress,
   liked,
-  disliked,
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -75,6 +73,25 @@ const ProfileCard = ({
     }),
   ).current;
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    onLikePress();
+  };
+
   return (
     <Animated.View
       style={[
@@ -115,37 +132,28 @@ const ProfileCard = ({
               </View>
               <View style={styles.actionButtons}>
                 <TouchableOpacity
-                  style={[
-                    styles.dislikeButton,
-                    disliked && styles.dislikeButtonActive,
-                  ]}
-                  onPress={onDislikePress}>
-                  <LinearGradient
-                    colors={['#FF416C', '#FF4B2B']}
-                    style={styles.gradientButton}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}>
-                    <SimpleLineIcons
-                      name="dislike"
-                      size={width * 0.06}
-                      color={theme.colors.white}
-                    />
-                  </LinearGradient>
-                </TouchableOpacity>
-                <TouchableOpacity
                   style={[styles.likeButton, liked && styles.likeButtonActive]}
-                  onPress={onLikePress}>
-                  <LinearGradient
-                    colors={['#4AC29A', '#BDFFF3']}
-                    style={styles.gradientButton}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}>
-                    <SimpleLineIcons
-                      name="like"
-                      size={width * 0.06}
-                      color={theme.colors.white}
-                    />
-                  </LinearGradient>
+                  onPress={handlePress}>
+                  <Animated.View style={{transform: [{scale: scaleAnim}]}}>
+                    <LinearGradient
+                      colors={
+                        liked ? ['#FF6FD8', '#3813C2'] : ['#4AC29A', '#BDFFF3']
+                      }
+                      style={styles.gradientButton}
+                      start={{x: 0, y: 0}}
+                      end={{x: 1, y: 1}}>
+                      <FontAwesome
+                        name={liked ? 'heart' : 'heart-o'}
+                        size={width * 0.06}
+                        color={theme.colors.error}
+                        style={{
+                          textShadowColor: 'rgba(0,0,0,0.3)',
+                          textShadowOffset: {width: 1, height: 1},
+                          textShadowRadius: 2,
+                        }}
+                      />
+                    </LinearGradient>
+                  </Animated.View>
                 </TouchableOpacity>
               </View>
             </View>

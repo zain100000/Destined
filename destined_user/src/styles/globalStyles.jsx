@@ -74,7 +74,7 @@ export const globalStyles = StyleSheet.create({
     fontSize: moderateScale(theme.typography.fontSize.md),
     fontFamily: theme.typography.fontFamilyRegular,
     color: theme.colors.dark,
-    minHeight: height * 0.06,
+    minHeight: height * 0.068,
   },
 
   inputLabel: {

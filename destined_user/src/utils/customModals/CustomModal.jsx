@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.01,
     textAlign: 'center',
     fontSize: theme.typography.fontSize.lg,
+    fontFamily: theme.typography.fontFamilySemiBold,
     color: theme.colors.dark,
   },
 
@@ -121,6 +122,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: theme.colors.dark,
     fontSize: theme.typography.fontSize.md,
+    fontFamily: theme.typography.fontFamilyRegular,
   },
 
   buttonContainer: {

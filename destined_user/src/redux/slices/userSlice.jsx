@@ -60,12 +60,12 @@ export const updateUser = createAsyncThunk(
 
 export const changePassword = createAsyncThunk(
   'user/changePassword',
-  async ({userId, formData}, {rejectWithValue}) => {
+  async ({formData}, {rejectWithValue}) => {
     try {
       const token = await getToken(rejectWithValue);
 
       const response = await axios.patch(
-        `${BASE_URL}/user/reset-user-password/${userId}`,
+        `${BASE_URL}/user/reset-user-password`,
         formData,
         {
           headers: {

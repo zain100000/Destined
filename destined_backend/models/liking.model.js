@@ -25,6 +25,12 @@ const likingSchema = new mongoose.Schema({
     required: true,
   },
 
+  totalLikes: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,

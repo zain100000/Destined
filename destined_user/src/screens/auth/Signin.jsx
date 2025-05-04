@@ -251,7 +251,7 @@ const Signin = () => {
       <CustomModal
         visible={showSuccessModal}
         title="Success!"
-        description="Login successfully"
+        description="Login successfully, Your profile is under review by super admin"
         animationSource={require('../../assets/animations/success.json')}
         onClose={() => setShowSuccessModal(false)}
       />
@@ -259,7 +259,7 @@ const Signin = () => {
       <CustomModal
         visible={showErrorModal}
         title="Error!"
-        description="Cannot Login! Your profile is under review by super admin"
+        description="Cannot Login!"
         animationSource={require('../../assets/animations/error.json')}
         onClose={() => setShowErrorModal(false)}
       />

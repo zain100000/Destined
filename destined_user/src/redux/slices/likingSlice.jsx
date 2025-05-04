@@ -17,18 +17,18 @@ const getToken = async rejectWithValue => {
 
 export const likeUser = createAsyncThunk(
   'liking/likeUser',
-  async ({userId, targetUserId}, {rejectWithValue}) => {
+  async ({userId, targetUserId}, {rejectWithValue, dispatch}) => {
     try {
       console.log('Attempting to like user:', targetUserId);
       const token = await getToken(rejectWithValue);
 
+      dispatch(likingSlice.actions.optimisticLike(targetUserId));
+
       console.log('Making API call to like user...');
+
       const response = await axios.post(
         `${BASE_URL}/liking/${userId}/like-user`,
-        {
-          targetUserId,
-          action: 'LIKE',
-        },
+        {targetUserId, action: 'LIKE'},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,13 +38,10 @@ export const likeUser = createAsyncThunk(
       );
 
       console.log('Like API response:', response.data);
+
       return response.data;
     } catch (error) {
-      console.error('Like user error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+      dispatch(likingSlice.actions.revertLike(targetUserId));
       return rejectWithValue(error.response?.data || error.message);
     }
   },
@@ -52,10 +49,13 @@ export const likeUser = createAsyncThunk(
 
 export const dislikeUser = createAsyncThunk(
   'liking/dislikeUser',
-  async ({userId, targetUserId}, {rejectWithValue}) => {
+  async ({userId, targetUserId}, {rejectWithValue, dispatch}) => {
     try {
       console.log('Attempting to dislike user:', targetUserId);
       const token = await getToken(rejectWithValue);
+
+      // Optimistically update the UI by removing the like
+      dispatch(likingSlice.actions.optimisticDislike(targetUserId));
 
       console.log('Making API call to dislike user...');
       const response = await axios.post(
@@ -80,6 +80,9 @@ export const dislikeUser = createAsyncThunk(
         response: error.response?.data,
         status: error.response?.status,
       });
+
+      // Revert the UI if the API call fails
+      dispatch(likingSlice.actions.revertDislike(targetUserId));
       return rejectWithValue(error.response?.data || error.message);
     }
   },
@@ -90,12 +93,12 @@ export const getLikedUsers = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const token = await getToken(rejectWithValue);
-      const response = await axios.get(`${BASE_URL}/liking/liked-users`, {
+      const response = await axios.get(`${BASE_URL}/liking/get-all-likings`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      return response.data;
+      return response.data.likings;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -109,38 +112,104 @@ const likingSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    optimisticLike: (state, action) => {
+      const targetUserId = action.payload;
+      if (!state.likedUsers.some(u => u.targetUserId === targetUserId)) {
+        state.likedUsers.push({
+          targetUserId,
+          _id: `temp-${Date.now()}`,
+        });
+      }
+    },
+    revertLike: (state, action) => {
+      const targetUserId = action.payload;
+      state.likedUsers = state.likedUsers.filter(
+        u => u.targetUserId !== targetUserId,
+      );
+    },
+
+    optimisticDislike: (state, action) => {
+      const targetUserId = action.payload;
+      state.likedUsers = state.likedUsers.filter(
+        u => u.targetUserId !== targetUserId,
+      );
+    },
+    revertDislike: (state, action) => {
+      const targetUserId = action.payload;
+      // Re-add the like if the API call failed
+      if (!state.likedUsers.some(u => u.targetUserId === targetUserId)) {
+        state.likedUsers.push({
+          targetUserId,
+          _id: `temp-${Date.now()}`, // Temporary ID
+        });
+      }
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(likeUser.pending, state => {
-        console.log('Like action pending...');
         state.loading = true;
         state.error = null;
       })
       .addCase(likeUser.fulfilled, (state, action) => {
-        console.log('Like action fulfilled:', action.payload);
+        const targetUserId =
+          action.payload.targetUserId?._id || action.payload.targetUserId;
+        if (
+          targetUserId &&
+          !state.likedUsers.some(u => u.targetUserId === targetUserId)
+        ) {
+          state.likedUsers.push({
+            targetUserId,
+            _id: action.payload._id,
+          });
+        }
         state.loading = false;
-        state.likedUsers.push(action.payload);
       })
-      .addCase(likeUser.rejected, (state, action) => {
-        console.log('Like action rejected:', action.payload);
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(likeUser.pending, state => {
+        state.loading = true;
+        state.error = null;
       })
+
       .addCase(dislikeUser.pending, state => {
-        console.log('Dislike action pending...');
         state.loading = true;
         state.error = null;
       })
       .addCase(dislikeUser.fulfilled, (state, action) => {
-        console.log('Dislike action fulfilled:', action.payload);
+        const targetUserId =
+          action.payload.targetUserId?._id || action.payload.targetUserId;
+        if (
+          targetUserId &&
+          !state.dislikeUser.some(u => u.targetUserId === targetUserId)
+        ) {
+          state.dislikeUser.push({
+            targetUserId,
+            _id: action.payload._id,
+          });
+        }
         state.loading = false;
-        state.likedUsers = state.likedUsers.filter(
-          user => user._id !== action.payload.targetUserId,
-        );
       })
-      .addCase(dislikeUser.rejected, (state, action) => {
-        console.log('Dislike action rejected:', action.payload);
+      .addCase(dislikeUser.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(getLikedUsers.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getLikedUsers.fulfilled, (state, action) => {
+        const normalizedLikes = action.payload.map(like => ({
+          _id: like._id,
+          targetUserId:
+            typeof like.targetUserId === 'object'
+              ? like.targetUserId._id
+              : like.targetUserId,
+        }));
+        state.likedUsers = normalizedLikes;
+        state.loading = false;
+      })
+      .addCase(getLikedUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

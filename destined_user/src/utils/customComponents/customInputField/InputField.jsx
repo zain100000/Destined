@@ -131,13 +131,13 @@ const styles = StyleSheet.create({
   leftIconContainer: {
     position: 'absolute',
     left: width * 0.034,
-    top: height * 0.02,
+    top: height * 0.024,
     zIndex: 1,
   },
 
   rightIconContainer: {
     position: 'absolute',
-    right: width * 0.04,
+    right: width * 0.014,
     padding: height * 0.014,
   },
 });

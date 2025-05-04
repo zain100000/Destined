@@ -15,7 +15,7 @@ import Header from '../../utils/customComponents/customHeader/Header';
 import {useDispatch, useSelector} from 'react-redux';
 import {getUser} from '../../redux/slices/userSlice';
 import {getProfileMatch} from '../../redux/slices/profileMatchSlice';
-import {likeUser, dislikeUser} from '../../redux/slices/likingSlice';
+import {dislikeUser, getLikedUsers, likeUser} from '../../redux/slices/likingSlice';
 import ProfileCard from '../../utils/customComponents/customCards/customProfileCard/ProfileCard';
 import Loader from '../../utils/customComponents/customLoader/Loader';
 
@@ -42,6 +42,7 @@ const Home = () => {
   );
 
   const loading = useSelector(state => state.profileMatch.loading);
+  const likedUsers = useSelector(state => state.liking.likedUsers);
 
   const [refreshing, setRefreshing] = useState(false);
   const [shuffledProfiles, setShuffledProfiles] = useState([]);
@@ -58,6 +59,7 @@ const Home = () => {
     if (user?.id) {
       dispatch(getUser(user.id));
       dispatch(getProfileMatch(user.id));
+      dispatch(getLikedUsers());
     }
   }, [dispatch, user]);
 
@@ -76,28 +78,44 @@ const Home = () => {
     }
   }, [dispatch, user]);
 
+  useEffect(() => {
+    if (shuffledProfiles.length > 0 && likedUsers.length > 0) {
+      shuffledProfiles.forEach(profile => {});
+
+      likedUsers.forEach(like => {});
+
+      shuffledProfiles.forEach(profile => {
+        const isLiked = likedUsers.some(
+          like => like.targetUserId === profile._id,
+        );
+      });
+    }
+  }, [shuffledProfiles, likedUsers]);
+
   const handleLike = targetUserId => {
-    if (targetUserId === user?.id) {
-      console.warn("You can't like yourself!");
-      return;
-    }
-    dispatch(likeUser({userId: user?.id, targetUserId}))
-      .unwrap()
-      .then(response => console.log('✅ Like successful:', response))
-      .catch(error => console.log('❌ Like failed:', error));
-  };
+    const isLiked = likedUsers.some(
+      like =>
+        like.targetUserId === targetUserId ||
+        (typeof like.targetUserId === 'object' &&
+          like.targetUserId._id === targetUserId),
+    );
 
-  const handleDislike = targetUserId => {
-    if (targetUserId === user?.id) {
-      console.warn("You can't dislike yourself!");
-      return;
+    if (isLiked) {
+      // If already liked, dislike the user
+      dispatch(dislikeUser({userId: user?.id, targetUserId}))
+        .unwrap()
+        .catch(error => {
+          console.log('Dislike failed:', error);
+        });
+    } else {
+      // If not liked, like the user
+      dispatch(likeUser({userId: user?.id, targetUserId}))
+        .unwrap()
+        .catch(error => {
+          console.log('Like failed:', error);
+        });
     }
-    dispatch(dislikeUser({userId: user?.id, targetUserId}))
-      .unwrap()
-      .then(response => console.log('✅ Dislike successful:', response))
-      .catch(error => console.log('❌ Dislike failed:', error));
   };
-
   const gradientColors = isDark
     ? [theme.darkMode.gradientPrimary, theme.darkMode.gradientSecondary]
     : [theme.lightMode.gradientPrimary, theme.lightMode.gradientSecondary];
@@ -136,6 +154,7 @@ const Home = () => {
           shuffledProfiles.map((person, index) => (
             <ProfileCard
               key={person._id}
+              _id={person._id}
               name={`${person.firstName} ${person.lastName}`}
               color={cardColors[index % cardColors.length]}
               image={
@@ -147,7 +166,12 @@ const Home = () => {
               interests={person.sharedInterests}
               matchScore={person.matchScore}
               onLikePress={() => handleLike(person._id)}
-              onDislikePress={() => handleDislike(person._id)}
+              liked={likedUsers.some(
+                like =>
+                  like.targetUserId === person._id ||
+                  (typeof like.targetUserId === 'object' &&
+                    like.targetUserId._id === person._id),
+              )}
             />
           ))
         )}
