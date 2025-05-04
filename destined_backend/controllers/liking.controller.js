@@ -14,56 +14,75 @@ exports.likeUser = async (req, res) => {
 
     if (!userId || !targetUserId) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing user IDs" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing user IDs",
+      });
     }
 
-    const trimmedUserId = userId.trim();
-    const trimmedTargetUserId = targetUserId.trim();
+    const trimmedUserId = userId.toString().trim();
+    const trimmedTargetUserId = targetUserId.toString().trim();
 
     if (
       !mongoose.Types.ObjectId.isValid(trimmedUserId) ||
       !mongoose.Types.ObjectId.isValid(trimmedTargetUserId)
     ) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user ID format" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format",
+      });
     }
 
     if (trimmedUserId === trimmedTargetUserId) {
       await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ success: false, message: "Cannot interact with yourself" });
+      return res.status(400).json({
+        success: false,
+        message: "Cannot interact with yourself",
+      });
     }
 
-    const [user, targetUser, existingTargetLike, existingUserLike] =
-      await Promise.all([
-        User.findById(trimmedUserId).session(session),
-        User.findById(trimmedTargetUserId).session(session),
-        Liking.findOne({
-          user: trimmedTargetUserId,
-          targetUserId: trimmedUserId,
-        }).session(session),
-        Liking.findOne({
-          user: trimmedUserId,
-          targetUserId: trimmedTargetUserId,
-        }).session(session),
-      ]);
+    const [user, targetUser, existingTargetLike] = await Promise.all([
+      User.findById(trimmedUserId).session(session),
+      User.findById(trimmedTargetUserId).session(session),
+      Liking.findOne({
+        user: trimmedTargetUserId,
+        targetUserId: trimmedUserId,
+      }).session(session),
+    ]);
 
     if (!user || !targetUser) {
       await session.abortTransaction();
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.matches) user.matches = [];
+    if (!targetUser.matches) targetUser.matches = [];
+    if (!user.liking) user.liking = [];
+    if (!targetUser.liking) targetUser.liking = [];
+
+    const userLikeIndex = user.liking.findIndex(
+      (like) => like.targetUserId.toString() === trimmedTargetUserId
+    );
+
+    if (userLikeIndex !== -1) {
+      user.liking[userLikeIndex].action = "LIKE";
+      user.liking[userLikeIndex].createdAt = new Date();
+    } else {
+      user.liking.push({
+        targetUserId: trimmedTargetUserId,
+        action: "LIKE",
+        matches: [],
+        createdAt: new Date(),
+      });
     }
 
     const isMutualLike = existingTargetLike?.action === "LIKE";
-    const wasAlreadyLiked = existingUserLike?.action === "LIKE";
 
-    const likingData = {
+    const likingUpdate = {
       user: trimmedUserId,
       targetUserId: trimmedTargetUserId,
       action: "LIKE",
@@ -71,22 +90,33 @@ exports.likeUser = async (req, res) => {
     };
 
     if (isMutualLike) {
-      likingData.matches = [trimmedTargetUserId];
-    }
+      if (!user.matches.includes(trimmedTargetUserId)) {
+        user.matches.push(trimmedTargetUserId);
+      }
+      if (!targetUser.matches.includes(trimmedUserId)) {
+        targetUser.matches.push(trimmedUserId);
+      }
 
-    await Liking.findOneAndUpdate(
-      { user: trimmedUserId, targetUserId: trimmedTargetUserId },
-      { $set: likingData, $inc: { totalLikes: 1 } },
-      { upsert: true, session }
-    );
+      const updatedUserLikeIndex = user.liking.findIndex(
+        (like) => like.targetUserId.toString() === trimmedTargetUserId
+      );
+      if (
+        updatedUserLikeIndex !== -1 &&
+        !user.liking[updatedUserLikeIndex].matches.includes(trimmedTargetUserId)
+      ) {
+        user.liking[updatedUserLikeIndex].matches.push(trimmedTargetUserId);
+      }
 
-    // Update targetUser's totalLikes only if this is a new LIKE (not a re-like)
-    if (!wasAlreadyLiked) {
-      targetUser.totalLikes = (targetUser.totalLikes || 0) + 1;
-    }
+      const targetLikeIndex = targetUser.liking.findIndex(
+        (like) => like.targetUserId.toString() === trimmedUserId
+      );
+      if (
+        targetLikeIndex !== -1 &&
+        !targetUser.liking[targetLikeIndex].matches.includes(trimmedUserId)
+      ) {
+        targetUser.liking[targetLikeIndex].matches.push(trimmedUserId);
+      }
 
-    // Add match to reverse side if mutual
-    if (isMutualLike) {
       await Liking.updateOne(
         { user: trimmedTargetUserId, targetUserId: trimmedUserId },
         { $addToSet: { matches: trimmedUserId } },
@@ -94,24 +124,51 @@ exports.likeUser = async (req, res) => {
       );
     }
 
+    if (isMutualLike) {
+      likingUpdate.$addToSet = { matches: trimmedTargetUserId };
+    }
+    await Liking.updateOne(
+      { user: trimmedUserId, targetUserId: trimmedTargetUserId },
+      likingUpdate,
+      { upsert: true, session }
+    );
+
+    await user.save({ session });
     await targetUser.save({ session });
 
     await session.commitTransaction();
+
     return res.status(200).json({
       success: true,
-      message: "User liked successfully",
+      message: "User Liked Successfully",
       liking: {
         isMatch: isMutualLike,
-        userId: trimmedUserId,
-        targetUserId: trimmedTargetUserId,
+        currentUser: {
+          _id: user._id,
+          matches: user.matches,
+          liking: user.liking.find(
+            (like) => like.targetUserId.toString() === trimmedTargetUserId
+          ),
+        },
+        targetUser: {
+          _id: targetUser._id,
+          matches: targetUser.matches,
+        },
       },
     });
   } catch (error) {
-    if (session) await session.abortTransaction();
+    if (session) {
+      await session.abortTransaction();
+    }
     console.error("Like error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   } finally {
-    if (session) await session.endSession();
+    if (session) {
+      await session.endSession();
+    }
   }
 };
 
@@ -132,8 +189,8 @@ exports.dislikeUser = async (req, res) => {
         .json({ success: false, message: "Missing user IDs" });
     }
 
-    const trimmedUserId = userId.trim();
-    const trimmedTargetUserId = targetUserId.trim();
+    const trimmedUserId = userId.toString().trim();
+    const trimmedTargetUserId = targetUserId.toString().trim();
 
     if (
       !mongoose.Types.ObjectId.isValid(trimmedUserId) ||
@@ -152,13 +209,9 @@ exports.dislikeUser = async (req, res) => {
         .json({ success: false, message: "Cannot interact with yourself" });
     }
 
-    const [user, targetUser, existingUserLike] = await Promise.all([
+    const [user, targetUser] = await Promise.all([
       User.findById(trimmedUserId).session(session),
       User.findById(trimmedTargetUserId).session(session),
-      Liking.findOne({
-        user: trimmedUserId,
-        targetUserId: trimmedTargetUserId,
-      }).session(session),
     ]);
 
     if (!user || !targetUser) {
@@ -168,40 +221,48 @@ exports.dislikeUser = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const wasLiked = existingUserLike?.action === "LIKE";
+    if (!user.liking) user.liking = [];
+    if (!user.matches) user.matches = [];
+    if (!targetUser.matches) targetUser.matches = [];
 
-    // Update Liking record to DISLIKE and clear matches
-    await Liking.findOneAndUpdate(
-      { user: trimmedUserId, targetUserId: trimmedTargetUserId },
-      {
-        $set: { action: "DISLIKE", matches: [], createdAt: new Date() },
-        $inc: { totalLikes: -1 },
-      },
-      { session }
+    user.liking = user.liking.filter(
+      (like) => like.targetUserId.toString() !== trimmedTargetUserId
+    );
+    targetUser.matches = targetUser.matches.filter(
+      (match) => match.toString() !== trimmedUserId
+    );
+    user.matches = user.matches.filter(
+      (match) => match.toString() !== trimmedTargetUserId
     );
 
-    // Remove this user from matches in the reverse Liking
-    await Liking.updateOne(
-      { user: trimmedTargetUserId, targetUserId: trimmedUserId },
-      { $pull: { matches: trimmedUserId } },
-      { session }
-    );
+    await Liking.deleteOne({
+      user: trimmedUserId,
+      targetUserId: trimmedTargetUserId,
+    }).session(session);
+    await Liking.deleteOne({
+      user: trimmedTargetUserId,
+      targetUserId: trimmedUserId,
+    }).session(session);
 
-    // Decrease target user's totalLikes if this was previously liked
-    if (wasLiked) {
-      targetUser.totalLikes = Math.max((targetUser.totalLikes || 1) - 1, 0);
-      await targetUser.save({ session });
-    }
+    await Promise.all([user.save({ session }), targetUser.save({ session })]);
 
     await session.commitTransaction();
+
     return res.status(200).json({
       success: true,
-      message: "User disliked successfully",
+      message: "User dislike successfully",
+      liking: {
+        currentUser: { _id: user._id },
+        targetUser: { _id: targetUser._id },
+      },
     });
   } catch (error) {
     if (session) await session.abortTransaction();
     console.error("Dislike error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   } finally {
     if (session) await session.endSession();
   }
