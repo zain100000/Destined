@@ -7,6 +7,7 @@ import {
   View,
   ScrollView,
   RefreshControl,
+  Text,
 } from 'react-native';
 import {LinearGradient} from 'react-native-linear-gradient';
 import {theme} from '../../styles/theme';
@@ -15,11 +16,16 @@ import Header from '../../utils/customComponents/customHeader/Header';
 import {useDispatch, useSelector} from 'react-redux';
 import {getUser} from '../../redux/slices/userSlice';
 import {getProfileMatch} from '../../redux/slices/profileMatchSlice';
-import {dislikeUser, getLikedUsers, likeUser} from '../../redux/slices/likingSlice';
+import {
+  dislikeUser,
+  getLikedUsers,
+  likeUser,
+} from '../../redux/slices/likingSlice';
 import ProfileCard from '../../utils/customComponents/customCards/customProfileCard/ProfileCard';
 import Loader from '../../utils/customComponents/customLoader/Loader';
+import {useNavigation} from '@react-navigation/native';
 
-const {width, height} = Dimensions.get('screen');
+const {height} = Dimensions.get('screen');
 
 const shuffleArray = array => {
   const shuffled = [...array];
@@ -32,6 +38,7 @@ const shuffleArray = array => {
 
 const Home = () => {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -46,6 +53,7 @@ const Home = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [shuffledProfiles, setShuffledProfiles] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const statusBarColor = isDark
@@ -65,7 +73,9 @@ const Home = () => {
 
   useEffect(() => {
     if (profileMatchUser?.length) {
-      setShuffledProfiles(shuffleArray(profileMatchUser));
+      const shuffled = shuffleArray(profileMatchUser);
+      setShuffledProfiles(shuffled);
+      setCurrentIndex(0);
     }
   }, [profileMatchUser]);
 
@@ -78,20 +88,6 @@ const Home = () => {
     }
   }, [dispatch, user]);
 
-  useEffect(() => {
-    if (shuffledProfiles.length > 0 && likedUsers.length > 0) {
-      shuffledProfiles.forEach(profile => {});
-
-      likedUsers.forEach(like => {});
-
-      shuffledProfiles.forEach(profile => {
-        const isLiked = likedUsers.some(
-          like => like.targetUserId === profile._id,
-        );
-      });
-    }
-  }, [shuffledProfiles, likedUsers]);
-
   const handleLike = targetUserId => {
     const isLiked = likedUsers.some(
       like =>
@@ -100,27 +96,30 @@ const Home = () => {
           like.targetUserId._id === targetUserId),
     );
 
-    if (isLiked) {
-      // If already liked, dislike the user
-      dispatch(dislikeUser({userId: user?.id, targetUserId}))
-        .unwrap()
-        .catch(error => {
-          console.log('Dislike failed:', error);
-        });
-    } else {
-      // If not liked, like the user
-      dispatch(likeUser({userId: user?.id, targetUserId}))
-        .unwrap()
-        .catch(error => {
-          console.log('Like failed:', error);
-        });
-    }
+    const action = isLiked ? dislikeUser : likeUser;
+
+    dispatch(action({userId: user?.id, targetUserId}))
+      .unwrap()
+      .catch(error => {
+        console.log(`${isLiked ? 'Dislike' : 'Like'} failed:`, error);
+      });
   };
+
+  const handleSwipe = () => {
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const handleUserDetailNavigation = person => {
+    navigation.navigate('User_Detail', {userDetails: person});
+  };
+
   const gradientColors = isDark
     ? [theme.darkMode.gradientPrimary, theme.darkMode.gradientSecondary]
     : [theme.lightMode.gradientPrimary, theme.lightMode.gradientSecondary];
 
   const cardColors = ['#5E2EFF', '#E91E63', '#9C27B0', '#2196F3', '#4CAF50'];
+
+  const currentProfile = shuffledProfiles[currentIndex];
 
   return (
     <LinearGradient
@@ -150,30 +149,39 @@ const Home = () => {
           <View style={styles.loaderContainer}>
             <Loader />
           </View>
+        ) : currentProfile ? (
+          <ProfileCard
+            key={currentProfile._id}
+            name={`${currentProfile.firstName} ${currentProfile.lastName}`}
+            age={currentProfile.age}
+            color={cardColors[currentIndex % cardColors.length]}
+            image={
+              currentProfile.profilePicture
+                ? {uri: currentProfile.profilePicture}
+                : require('../../assets/placeholders/default-avatar.png')
+            }
+            interests={currentProfile.sharedInterests}
+            matchScore={currentProfile.matchScore}
+            liked={likedUsers.some(
+              like =>
+                like.targetUserId === currentProfile._id ||
+                (typeof like.targetUserId === 'object' &&
+                  like.targetUserId._id === currentProfile._id),
+            )}
+            onLikePress={() => handleLike(currentProfile._id)}
+            onCardPress={() => handleUserDetailNavigation(currentProfile)}
+            onSwiped={handleSwipe}
+          />
         ) : (
-          shuffledProfiles.map((person, index) => (
-            <ProfileCard
-              key={person._id}
-              _id={person._id}
-              name={`${person.firstName} ${person.lastName}`}
-              color={cardColors[index % cardColors.length]}
-              image={
-                person?.profilePicture
-                  ? {uri: person.profilePicture}
-                  : require('../../assets/placeholders/default-avatar.png')
-              }
-              age={person.age}
-              interests={person.sharedInterests}
-              matchScore={person.matchScore}
-              onLikePress={() => handleLike(person._id)}
-              liked={likedUsers.some(
-                like =>
-                  like.targetUserId === person._id ||
-                  (typeof like.targetUserId === 'object' &&
-                    like.targetUserId._id === person._id),
-              )}
-            />
-          ))
+          <Text
+            style={[
+              styles.emptyText,
+              {
+                color: isDark ? theme.colors.white : theme.colors.primary,
+              },
+            ]}>
+            No More Profiles!
+          </Text>
         )}
       </ScrollView>
     </LinearGradient>
@@ -184,9 +192,14 @@ export default Home;
 
 const styles = StyleSheet.create({
   swiperCardContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -height * 0.08,
+  },
+
+  emptyText: {
+    fontSize: theme.typography.fontSize.xl,
+    fontFamily: theme.typography.fontFamilySemiBold,
   },
 });

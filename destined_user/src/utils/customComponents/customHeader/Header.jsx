@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
 
   onlineIndicator: {
     position: 'absolute',
-    bottom: height * 0.048,
-    right: width * 0.0,
+    bottom: -height * 0,
+    right: -width * 0.0,
     width: width * 0.028,
     height: width * 0.028,
     borderRadius: theme.borderRadius.circle,

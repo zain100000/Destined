@@ -57,7 +57,7 @@ const InputField = ({
               borderWidth: 2.5,
               borderColor: theme.colors.primary,
               backgroundColor: theme.colors.white,
-              borderRadius: theme.borderRadius.large
+              borderRadius: theme.borderRadius.large,
             },
             inputStyle,
           ]}
@@ -87,7 +87,7 @@ const InputField = ({
                 backgroundColor: theme.colors.white,
                 color: theme.colors.primary,
               },
-              multiline && {height: 100},
+              multiline && {height: 160},
               inputStyle,
               leftIcon && {paddingLeft: width * 0.1},
               rightIcon && {paddingRight: width * 0.1},

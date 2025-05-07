@@ -60,6 +60,13 @@ const Profile = () => {
     });
   };
 
+  const handleInterestNavigate = () => {
+    console.log('Navigate to interest', user)
+    navigation.navigate('Update_Interest', {
+      user: userProfile,
+    });
+  };
+
   return (
     <LinearGradient
       colors={gradientColors}
@@ -90,11 +97,26 @@ const Profile = () => {
         <View style={styles.profileCards}>
           <View style={styles.accountContainer}>
             <ProfileScreenCard
-              title="Profile Details"
+              title="Update Profile"
               iconName="person"
               iconColor={theme.colors.primary}
               rightIcon="chevron-forward"
               onPressFunction={handleProfileNavigate}
+              textColor={
+                colorScheme === 'dark'
+                  ? theme.lightMode.primaryLight
+                  : theme.darkMode.primaryDark
+              }
+            />
+          </View>
+
+          <View style={styles.interestContainer}>
+            <ProfileScreenCard
+              title="Update Interest"
+              iconName="heart"
+              iconColor={theme.colors.primary}
+              rightIcon="chevron-forward"
+              onPressFunction={handleInterestNavigate}
               textColor={
                 colorScheme === 'dark'
                   ? theme.lightMode.primaryLight

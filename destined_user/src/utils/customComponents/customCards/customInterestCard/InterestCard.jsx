@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, Dimensions, Image} from 'react-native';
+import {View, Text, StyleSheet, Dimensions} from 'react-native';
 import {theme} from '../../../../styles/theme';
 
 const {width, height} = Dimensions.get('screen');
@@ -33,9 +33,14 @@ const styles = StyleSheet.create({
   },
 
   selectedCard: {
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderWidth: 4,
+    borderColor: '#ff33cc',
     backgroundColor: theme.colors.white,
+    shadowColor: '#ff66ff',
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 5,
   },
 
   interestName: {

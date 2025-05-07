@@ -7,6 +7,7 @@ import userReducer from '../slices/userSlice';
 import likingReducer from '../slices/likingSlice';
 import profileMatchReducer from '../slices/profileMatchSlice';
 import interestReducer from '../slices/interestSlice';
+import uploadMediaReducer from '../slices/uploadMediaSlice';
 
 const persistConfig = {
   key: 'root',
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   liking: likingReducer,
   profileMatch: profileMatchReducer,
   interest: interestReducer,
+  uploadMedia: uploadMediaReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

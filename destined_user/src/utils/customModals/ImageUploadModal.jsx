@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import LottieView from 'lottie-react-native';
 import uploadAnimation from '../../assets/animations/image.json';
@@ -27,22 +28,27 @@ const ImageUploadModal = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]);
 
-  const handleImageSelection = image => {
-    setSelectedImage(image);
-    onImageUpload(image.path);
+  const handleImageSelection = images => {
+    if (images.length <= 3) {
+      setSelectedImages(images);
+      onImageUpload(images);
+    }
   };
 
-  const handlePickImage = async () => {
+  const handlePickImages = async () => {
+    if (selectedImages.length >= 3) return;
+
     try {
-      const image = await ImagePicker.openPicker({
+      const images = await ImagePicker.openPicker({
+        multiple: true,
+        maxFiles: 3,
         width: 400,
         height: 400,
-        cropping: true,
       });
 
-      handleImageSelection(image);
+      handleImageSelection(images);
     } catch (error) {
       console.error(error);
       setShowErrorModal(true);
@@ -53,6 +59,8 @@ const ImageUploadModal = ({
   };
 
   const handleOpenCamera = async () => {
+    if (selectedImages.length >= 3) return;
+
     try {
       const image = await ImagePicker.openCamera({
         width: 400,
@@ -60,7 +68,7 @@ const ImageUploadModal = ({
         cropping: true,
       });
 
-      handleImageSelection(image);
+      handleImageSelection([image]);
     } catch (error) {
       console.error(error);
       setShowErrorModal(true);
@@ -101,7 +109,7 @@ const ImageUploadModal = ({
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePickImage}>
+            <TouchableOpacity onPress={handlePickImages}>
               <View style={styles.galleryContainer}>
                 <View style={styles.iconContainer}>
                   {loading ? (
@@ -122,6 +130,18 @@ const ImageUploadModal = ({
               </View>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.selectedImagesContainer}>
+            {selectedImages.map((image, index) => (
+              <View key={index} style={styles.selectedImageWrapper}>
+                <Image
+                  source={{uri: image.path}}
+                  style={styles.selectedImage}
+                  resizeMode="cover"
+                />
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
@@ -130,7 +150,7 @@ const ImageUploadModal = ({
         onClose={() => setShowSuccessModal(false)}
         animationSource={require('../../assets/animations/success.json')}
         title="Success!"
-        description="Image selected successfully!"
+        description="Images selected successfully!"
       />
 
       <CustomModal
@@ -246,5 +266,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
+  },
+
+  selectedImagesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+    flexWrap: 'wrap',
+  },
+
+  selectedImageWrapper: {
+    width: width * 0.25,
+    height: width * 0.25,
+    margin: 5,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.lightGray,
+  },
+
+  selectedImage: {
+    width: '100%',
+    height: '100%',
   },
 });

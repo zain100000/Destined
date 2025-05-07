@@ -14,11 +14,13 @@ import ChangePassword from '../screens/profileModule/profileSubScreens/ChangePas
 
 // Main Imports
 import BottomNavigator from './bottomNavigator/BottomNavigator';
+import UserDetail from '../screens/homeModule/homeSubScreens/UserDetail';
 
 // Profile Imports
 import PrivacyPolicy from '../screens/profileModule/profileSubScreens/PrivacyPolicy';
 import AppUsage from '../screens/profileModule/profileSubScreens/AppUsage';
 import ProfileDetail from '../screens/profileModule/profileSubScreens/ProfileDetail';
+import UpdateInterest from '../screens/profileModule/profileSubScreens/UpdateInterest';
 
 const Stack = createNativeStackNavigator();
 
@@ -64,6 +66,12 @@ const AppNavigator = () => {
           )}
         </Stack.Screen>
 
+        <Stack.Screen name="User_Detail">
+          {props => (
+            <UserDetail {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
         {/* Profile Routes */}
         <Stack.Screen name="Privacy_Policy">
           {props => (
@@ -80,6 +88,12 @@ const AppNavigator = () => {
         <Stack.Screen name="Profile_Details">
           {props => (
             <ProfileDetail {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="Update_Interest">
+          {props => (
+            <UpdateInterest {...props} setStatusBarColor={setStatusBarColor} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

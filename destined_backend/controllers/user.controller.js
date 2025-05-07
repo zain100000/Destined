@@ -20,6 +20,7 @@ exports.registerUser = async (req, res) => {
       lastActive,
       bio,
       age,
+      city,
     } = req.body;
 
     if (!verifiedPhones.has(phone)) {
@@ -92,6 +93,7 @@ exports.registerUser = async (req, res) => {
       lastActive,
       role: "USER",
       bio,
+      city,
       isVerified: true,
     });
 
@@ -275,7 +277,35 @@ exports.updateUser = async (req, res) => {
     if (req.body.lastName) user.lastName = req.body.lastName;
     if (req.body.bio) user.bio = req.body.bio;
     if (req.body.interests) user.interests = req.body.interests;
+    if (req.body.city) user.city = req.body.city;
 
+    // Handle DOB update and age calculation
+    if (req.body.dob) {
+      const newDob = new Date(req.body.dob);
+      const today = new Date();
+
+      let age = today.getFullYear() - newDob.getFullYear();
+      const monthDiff = today.getMonth() - newDob.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < newDob.getDate())
+      ) {
+        age--;
+      }
+
+      if (age < 18) {
+        return res.status(403).json({
+          success: false,
+          message: "You must be at least 18 years old.",
+        });
+      }
+
+      user.dob = newDob;
+      user.age = age;
+    }
+
+    // Handle profile picture update
     if (req.files && req.files.profilePicture) {
       const newProfilePicture = req.files.profilePicture[0];
 
