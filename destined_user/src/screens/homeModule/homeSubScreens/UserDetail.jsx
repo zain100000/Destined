@@ -159,9 +159,7 @@ const UserDetail = () => {
                   textShadowColor: isDark ? '#E91E63' : '#3F51B5',
                 },
               ]}>
-              {`${userDetails?.firstName || ''} ${
-                userDetails?.lastName || ''
-              }`.trim()}
+              {`${userDetails?.name || 'User'}`}
             </Text>
 
             <View style={styles.likesContainer}>

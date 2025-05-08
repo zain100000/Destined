@@ -1,19 +1,9 @@
-export const validateFirstName = firstName => {
-  if (!firstName) {
-    return 'First Name is required';
+export const validateName = name => {
+  if (!name) {
+    return 'Full Name is required';
   }
-  if (firstName.length < 4) {
-    return 'First Name is at least 4 characters long';
-  }
-  return '';
-};
-
-export const validateLastName = lastName => {
-  if (!lastName) {
-    return 'Last Name is required';
-  }
-  if (lastName.length < 4) {
-    return 'Last Name is at least 4 characters long';
+  if (name.length < 4) {
+    return 'FullName is at least 4 characters long';
   }
   return '';
 };
@@ -66,8 +56,7 @@ export const validateDob = dob => {
 
 export const validateFields = fields => {
   const validationFunctions = {
-    firstName: validateFirstName,
-    lastName: validateLastName,
+    name: validateName,
     email: validateEmail,
     password: validatePassword,
     phone: validatePhone,

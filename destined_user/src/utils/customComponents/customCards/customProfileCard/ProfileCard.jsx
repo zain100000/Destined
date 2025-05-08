@@ -25,7 +25,9 @@ const ProfileCard = ({
   onLikePress,
   liked,
   onCardPress,
-  onSwiped, // NEW
+  onSwiped,
+  onFriendRequestPress,
+  requested,
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -171,6 +173,34 @@ const ProfileCard = ({
                       </LinearGradient>
                     </Animated.View>
                   </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.friendRequestButton,
+                      requested && styles.friendRequestButtonActive,
+                    ]}
+                    onPress={onFriendRequestPress}>
+                    <LinearGradient
+                      colors={
+                        requested
+                          ? ['#FF6FD8', '#3813C2']
+                          : ['#4AC29A', '#BDFFF3']
+                      }
+                      style={styles.gradientButton}
+                      start={{x: 0, y: 0}}
+                      end={{x: 1, y: 1}}>
+                      <FontAwesome
+                        name={requested ? 'user-check' : 'user-plus'}
+                        size={width * 0.06}
+                        color={theme.colors.primary}
+                        style={{
+                          textShadowColor: 'rgba(0,0,0,0.3)',
+                          textShadowOffset: {width: 1, height: 1},
+                          textShadowRadius: 2,
+                        }}
+                      />
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -258,6 +288,7 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
+
   bottomSection: {
     position: 'absolute',
     bottom: height * 0.04,
@@ -310,6 +341,7 @@ const styles = StyleSheet.create({
 
   actionButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     gap: width * 0.03,
   },
@@ -329,17 +361,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#BDFFF3',
   },
 
+  friendRequestButton: {
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: theme.borderRadius.circle,
+    shadowColor: '#4AC29A',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  friendRequestButtonActive: {
+    backgroundColor: '#BDFFF3',
+  },
+
   gradientButton: {
     width: '100%',
     height: '100%',
     borderRadius: theme.borderRadius.circle,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  buttonText: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: 'bold',
   },
 
   interests: {
@@ -363,5 +405,10 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.dark,
     fontFamily: theme.typography.fontFamilySemiBold,
+  },
+
+  requestButton: {
+    alignSelf: 'center',
+    marginTop: height * 0.025,
   },
 });

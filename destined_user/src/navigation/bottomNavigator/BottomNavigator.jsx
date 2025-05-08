@@ -13,8 +13,10 @@ import Users from '../../screens/userModule/Users';
 import Chats from '../../screens/chatModule/Chats';
 import Profile from '../../screens/profileModule/Profile';
 import LinearGradient from 'react-native-linear-gradient';
+import Requests from '../../screens/requestsModule/Requests';
 
 const Tab = createBottomTabNavigator();
+
 const {width, height} = Dimensions.get('screen');
 
 const AnimatedTabIcon = ({focused, source, isDark}) => {
@@ -49,7 +51,10 @@ const AnimatedTabIcon = ({focused, source, isDark}) => {
           end={{x: 0.8, y: 0.8}}
         />
       )}
-      <Image source={source} style={[styles.icon]} />
+      <Image
+        source={source}
+        style={[styles.icon, {width: width * 0.06, height: width * 0.06}]}
+      />
     </Animated.View>
   );
 };
@@ -91,6 +96,7 @@ const BottomNavigator = () => {
           ),
         }}
       />
+
       <Tab.Screen
         name="Users"
         component={Users}
@@ -108,6 +114,25 @@ const BottomNavigator = () => {
           ),
         }}
       />
+
+      <Tab.Screen
+        name="Requests"
+        component={Requests}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <AnimatedTabIcon
+              focused={focused}
+              isDark={isDark}
+              source={
+                focused
+                  ? require('../../assets/navigatorIcons/inbox-filled.png')
+                  : require('../../assets/navigatorIcons/inbox.png')
+              }
+            />
+          ),
+        }}
+      />
+
       <Tab.Screen
         name="Chat"
         component={Chats}
@@ -125,6 +150,7 @@ const BottomNavigator = () => {
           ),
         }}
       />
+
       <Tab.Screen
         name="Profile"
         component={Profile}

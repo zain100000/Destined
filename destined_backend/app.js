@@ -4,12 +4,16 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const http = require("http");
 const { initializeSocket } = require("./utilities/socket/socket");
+const { initializeFriendRequestSocket } = require("./controllers/request.controller");
 
 require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
 const io = initializeSocket(server);
+
+// Initialize friend request socket handlers
+initializeFriendRequestSocket(io);
 
 // Middleware Setup
 app.use(bodyParser.json({ limit: "20kb" }));

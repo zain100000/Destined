@@ -23,8 +23,7 @@ import {globalStyles} from '../../styles/globalStyles';
 import AuthHeader from '../../utils/customComponents/customHeader/AuthHeader';
 import {
   validatePhone,
-  validateFirstName,
-  validateLastName,
+  validateName,
   validateEmail,
   validateGender,
   validateDob,
@@ -72,8 +71,7 @@ const Signup = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [phone, setPhone] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('');
   const [dob, setDOB] = useState('');
@@ -82,8 +80,7 @@ const Signup = () => {
   const [selectedInterests, setSelectedInterests] = useState([]);
 
   const [phoneError, setPhoneError] = useState('');
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [genderError, setGenderError] = useState('');
   const [dobError, setDobError] = useState('');
@@ -133,15 +130,13 @@ const Signup = () => {
 
   useEffect(() => {
     const hasErrors =
-      phoneError ||
-      firstNameError ||
-      lastNameError ||
+      phoneError ||      
+      nameError ||
       emailError ||
       genderError || // This will trigger the button disabling if there's a gender error
       dobError ||
       passwordError ||
-      !firstName ||
-      !lastName ||
+      !name ||
       !email ||
       !gender || // Check for an empty gender as well
       !dob ||
@@ -150,14 +145,12 @@ const Signup = () => {
     setIsButtonEnabled(!hasErrors);
   }, [
     phoneError,
-    firstNameError,
-    lastNameError,
+    nameError,
     emailError,
     genderError, // Watch for genderError here
     dobError,
     passwordError,
-    firstName,
-    lastName,
+    name,
     email,
     gender, // Watch for gender change as well
     dob,
@@ -236,14 +229,9 @@ const Signup = () => {
     setPhoneError(validatePhone(text));
   };
 
-  const handleFirstNameChange = value => {
-    setFirstName(value);
-    setFirstNameError(validateFirstName(value));
-  };
-
-  const handleLastNameChange = value => {
-    setLastName(value);
-    setLastNameError(validateLastName(value));
+  const handleNameChange = value => {
+    setName(value);
+    setNameError(validateName(value));
   };
 
   const handleEmailChange = value => {
@@ -692,38 +680,16 @@ const Signup = () => {
                 }
               />
             </Animatable.View>
-
-            <Animatable.View
-              animation="fadeInRight"
-              duration={800}
-              delay={600}
-              style={styles.inputContainer}>
-              <InputField
-                placeholder="First Name"
-                value={firstName}
-                onChangeText={handleFirstNameChange}
-                leftIcon={
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={width * 0.05}
-                    color={theme.colors.primary}
-                  />
-                }
-              />
-              {firstNameError && (
-                <Text style={globalStyles.textError}>{firstNameError}</Text>
-              )}
-            </Animatable.View>
-
+           
             <Animatable.View
               animation="fadeInRight"
               duration={800}
               delay={700}
               style={styles.inputContainer}>
               <InputField
-                placeholder="Last Name"
-                value={lastName}
-                onChangeText={handleLastNameChange}
+                placeholder="Full Name"
+                value={name}
+                onChangeText={handleNameChange}
                 leftIcon={
                   <MaterialCommunityIcons
                     name="account"
@@ -732,8 +698,8 @@ const Signup = () => {
                   />
                 }
               />
-              {lastNameError && (
-                <Text style={globalStyles.textError}>{lastNameError}</Text>
+              {nameError && (
+                <Text style={globalStyles.textError}>{nameError}</Text>
               )}
             </Animatable.View>
 
@@ -941,8 +907,7 @@ const Signup = () => {
     // Validate all fields
     const validationErrors = {
       phone: validatePhone(phone),
-      firstName: validateFirstName(firstName),
-      lastName: validateLastName(lastName),
+      name: validateName(name),
       email: validateEmail(email),
       gender: validateGender(gender),
       dob: validateDob(dob),
@@ -974,8 +939,7 @@ const Signup = () => {
     // Prepare form data
     const formData = new FormData();
     formData.append('phone', phone);
-    formData.append('firstName', firstName);
-    formData.append('lastName', lastName);
+    formData.append('name', name);
     formData.append('gender', gender);
     formData.append('dob', moment(dob).format('YYYY-MM-DD'));
     formData.append('email', email);

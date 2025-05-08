@@ -48,6 +48,8 @@ const Home = () => {
     state => state.profileMatch.profileMatch,
   );
 
+  console.log('PROFILES', profileMatchUser)
+
   const loading = useSelector(state => state.profileMatch.loading);
   const likedUsers = useSelector(state => state.liking.likedUsers);
 
@@ -152,7 +154,7 @@ const Home = () => {
         ) : currentProfile ? (
           <ProfileCard
             key={currentProfile._id}
-            name={`${currentProfile.firstName} ${currentProfile.lastName}`}
+            name={`${currentProfile.name}`}
             age={currentProfile.age}
             color={cardColors[currentIndex % cardColors.length]}
             image={

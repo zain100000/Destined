@@ -86,7 +86,7 @@ const Profile = () => {
         <View style={styles.profileInfoContainer}>
           <ProfileHeaderCard
             image={userProfile?.profilePicture}
-            name={`${userProfile?.firstName} ${userProfile?.lastName}`}
+            name={`${userProfile?.name}`}
             phone={user?.phone}
             btnTitle="Logout"
             onPress={handleLogoutModal}

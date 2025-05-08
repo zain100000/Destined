@@ -84,8 +84,9 @@ const UpdateInterest = () => {
     setShowAuthModal(true);
 
     const formData = new FormData();
-    selectedInterests.forEach((interest, index) => {
-      formData.append(`interests[${index}][interest]`, interest);
+    selectedInterests.forEach((interestValue, index) => {
+      formData.append(`interests[${index}][interest]`, interestValue);
+      formData.append(`interests[${index}][selectedOption]`, interestValue);
     });
 
     try {

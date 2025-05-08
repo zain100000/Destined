@@ -13,7 +13,7 @@ import Header from '../../utils/customComponents/customHeader/Header';
 
 const {width, height} = Dimensions.get('screen');
 
-const Chats = () => {
+const Requests = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -38,14 +38,14 @@ const Chats = () => {
       <View style={styles.headerContainer}>
         <Header
           logo={require('../../assets/icons/heart.png')}
-          title="Chats"
+          title="Requests"
         />
       </View>
     </LinearGradient>
   );
 };
 
-export default Chats;
+export default Requests;
 
 const styles = StyleSheet.create({
   scrollViewContainer: {

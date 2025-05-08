@@ -1,4 +1,5 @@
 const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
 
 let io;
 
@@ -9,14 +10,43 @@ const initializeSocket = (server) => {
       methods: ["GET", "POST"],
     },
     transports: ["websocket", "polling"],
+    pingTimeout: 20000,
+    pingInterval: 25000,
+  });
+
+  // JWT authentication middleware
+  io.use((socket, next) => {
+    const token = socket.handshake.query.token;
+
+    if (!token) {
+      console.error("No token provided for socket", socket.id);
+      return next(new Error("Authentication error: No token provided"));
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = decoded.user;
+
+      next();
+    } catch (error) {
+      console.error(
+        "JWT verification error for socket",
+        socket.id,
+        ":",
+        error.message
+      );
+      next(new Error("Authentication error: Invalid token"));
+    }
   });
 
   io.on("connection", (socket) => {
-    console.log(`🔌 Connected: ${socket.id}`);
+    if (socket.user && socket.user.id) {
+      socket.join(socket.user.id);
+    }
 
-    socket.on("disconnect", () => {
-      console.log(`❌ Disconnected: ${socket.id}`);
-    });
+    socket.on("disconnect", (reason) => {});
+
+    socket.on("error", (error) => {});
   });
 
   return io;

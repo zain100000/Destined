@@ -2,15 +2,9 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    profilePicture: String,
+    profilePicture: String,    
 
-    firstName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    lastName: {
+    name: {
       type: String,
       required: true,
       trim: true,
@@ -138,6 +132,14 @@ const userSchema = new mongoose.Schema(
       enum: ["PENDING", "VERIFIED", "NOT_VERIFIED"],
       default: "PENDING",
     },
+
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
 
     lastActive: {
       type: Date,

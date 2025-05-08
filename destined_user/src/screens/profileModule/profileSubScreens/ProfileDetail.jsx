@@ -56,7 +56,7 @@ const ProfileDetail = () => {
   const [editDob, setEditDob] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [name, setName] = useState(
-    `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+    `${user.name || 'User'}`.trim(),
   );
   const [bio, setBio] = useState(user.bio || 'Bio');
   const [city, setCity] = useState(user.city || 'City');
@@ -158,12 +158,11 @@ const ProfileDetail = () => {
   const handleUpdateName = async () => {
     setLoading(true);
     try {
-      const [firstName, ...lastNameArr] = tempName.trim().split(' ');
-      const lastName = lastNameArr.join(' ');
+      const [name] = tempName.trim();
       const resultAction = await dispatch(
         updateUser({
           userId: user._id,
-          formData: {firstName, lastName},
+          formData: {name},
         }),
       );
       if (updateUser.fulfilled.match(resultAction)) {

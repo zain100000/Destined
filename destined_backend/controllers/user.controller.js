@@ -10,8 +10,7 @@ exports.registerUser = async (req, res) => {
   try {
     const {
       phone,
-      firstName,
-      lastName,
+      name,      
       gender,
       dob,
       interests,
@@ -81,8 +80,7 @@ exports.registerUser = async (req, res) => {
 
     const user = new User({
       profilePicture: userProfileImageUrl,
-      firstName,
-      lastName,
+      name,      
       phone,
       email,
       password: hashedPassword,
@@ -156,6 +154,7 @@ exports.loginUser = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
         phone: user.phone,
         isOnline: user.isOnline, // Add isOnline here
       },
@@ -175,6 +174,7 @@ exports.loginUser = async (req, res) => {
         user: {
           id: user.id,
           email: user.email,
+          name: user.name,
           phone: user.phone,
           isOnline: user.isOnline, // Add isOnline here in the response
         },
@@ -273,8 +273,7 @@ exports.updateUser = async (req, res) => {
         .json({ success: false, message: "User not found." });
     }
 
-    if (req.body.firstName) user.firstName = req.body.firstName;
-    if (req.body.lastName) user.lastName = req.body.lastName;
+    if (req.body.name) user.name = req.body.name;
     if (req.body.bio) user.bio = req.body.bio;
     if (req.body.interests) user.interests = req.body.interests;
     if (req.body.city) user.city = req.body.city;
