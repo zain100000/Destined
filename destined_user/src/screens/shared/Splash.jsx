@@ -13,11 +13,14 @@ import {theme} from '../../styles/theme';
 import {globalStyles} from '../../styles/globalStyles';
 import {useNavigation} from '@react-navigation/native';
 import {LinearGradient} from 'react-native-linear-gradient';
+import {initializeSocket} from '../../utils/customSocket/Socket'; 
+import {useDispatch} from 'react-redux';
 
 const {width, height} = Dimensions.get('screen');
 
 const Splash = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -39,6 +42,9 @@ const Splash = () => {
         const token = await AsyncStorage.getItem('authToken');
 
         if (token) {
+          // Initialize socket connection if token exists
+          initializeSocket(token);
+
           navigation.reset({
             index: 0,
             routes: [{name: 'Main'}],
@@ -49,11 +55,17 @@ const Splash = () => {
             routes: [{name: 'OnBoard'}],
           });
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error('Session check error:', error);
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'OnBoard'}],
+        });
+      }
     };
 
     checkSession();
-  }, []);
+  }, [navigation, dispatch]);
 
   return (
     <View style={[globalStyles.container, styles.primaryContainer]}>

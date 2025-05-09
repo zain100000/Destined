@@ -180,6 +180,113 @@ const UserDetail = () => {
             </View>
           </View>
 
+          <View style={styles.infoContainer}>
+            {/* Row 1 */}
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="calendar"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {new Date(userDetails?.dob).toISOString().split('T')[0]}
+                </Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="email"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {userDetails?.email || 'Email'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Row 2 */}
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {userDetails?.city || 'City'}
+                </Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="calendar"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {userDetails?.age || 'Age'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Row 3 */}
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="phone"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {userDetails?.phone || 'Phone'}
+                </Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                  name="gender-male-female"
+                  size={width * 0.06}
+                  color={isDark ? theme.colors.white : theme.colors.primary}
+                  style={styles.infoIcon}
+                />
+                <Text
+                  style={[
+                    styles.infoText,
+                    {color: isDark ? theme.colors.white : theme.colors.text},
+                  ]}>
+                  {userDetails?.gender || 'Gender'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
           <View style={styles.section}>
             <Text
               style={[
@@ -384,5 +491,31 @@ const styles = StyleSheet.create({
 
   tabContentContainer: {
     marginTop: height * 0.02,
+  },
+
+  infoContainer: {
+    marginVertical: height * 0.01,
+    gap: theme.gap(1)
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: height * 0.014,
+  },
+
+  infoItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  infoIcon: {
+    marginRight: width * 0.014,
+  },
+
+  infoText: {
+    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.fontFamilyRegular,
   },
 });

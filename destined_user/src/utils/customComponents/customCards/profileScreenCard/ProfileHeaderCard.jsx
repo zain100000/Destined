@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: theme.gap(0.4),
+    gap: theme.gap(0.1),
   },
 
   imgContainer: {
@@ -93,12 +93,17 @@ const styles = StyleSheet.create({
 
   infoContainer: {
     top: height * 0.012,
+    flex: 1,
+    maxWidth: width * 0.4,
   },
 
   name: {
     fontSize: theme.typography.fontSize.md,
     fontFamily: theme.typography.fontFamilySemiBold,
+    left: width * 0.04,
     color: theme.colors.dark,
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
 
   phone: {
@@ -106,5 +111,10 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamilyMedium,
     color: theme.colors.secondary,
     marginBottom: height * 0.03,
+    left: width * 0.04,
   },
+
+  btnContainer:{
+    right: width * 0.04
+  }
 });

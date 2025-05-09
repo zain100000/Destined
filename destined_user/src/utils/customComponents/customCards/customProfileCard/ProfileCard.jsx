@@ -1,4 +1,4 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useRef, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -27,11 +27,11 @@ const ProfileCard = ({
   onCardPress,
   onSwiped,
   onFriendRequestPress,
-  requested,
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
   const scaleIn = useRef(new Animated.Value(0.95)).current;
+  const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -47,6 +47,11 @@ const ProfileCard = ({
       }),
     ]).start();
   }, []);
+
+  const handleFriendRequest = () => {
+    setRequestSent(true);
+    onFriendRequestPress();
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -177,12 +182,12 @@ const ProfileCard = ({
                   <TouchableOpacity
                     style={[
                       styles.friendRequestButton,
-                      requested && styles.friendRequestButtonActive,
+                      requestSent && styles.friendRequestButtonActive,
                     ]}
-                    onPress={onFriendRequestPress}>
+                    onPress={handleFriendRequest}>
                     <LinearGradient
                       colors={
-                        requested
+                        requestSent
                           ? ['#FF6FD8', '#3813C2']
                           : ['#4AC29A', '#BDFFF3']
                       }
@@ -190,7 +195,7 @@ const ProfileCard = ({
                       start={{x: 0, y: 0}}
                       end={{x: 1, y: 1}}>
                       <FontAwesome
-                        name={requested ? 'user-check' : 'user-plus'}
+                        name={requestSent ? 'clock-o' : 'user-plus'}
                         size={width * 0.06}
                         color={theme.colors.primary}
                         style={{

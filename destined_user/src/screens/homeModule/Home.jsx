@@ -24,6 +24,7 @@ import {
 import ProfileCard from '../../utils/customComponents/customCards/customProfileCard/ProfileCard';
 import Loader from '../../utils/customComponents/customLoader/Loader';
 import {useNavigation} from '@react-navigation/native';
+import {sendFriendRequest} from '../../utils/customSocket/socketActions/SocketActions';
 
 const {height} = Dimensions.get('screen');
 
@@ -47,9 +48,6 @@ const Home = () => {
   const profileMatchUser = useSelector(
     state => state.profileMatch.profileMatch,
   );
-
-  console.log('PROFILES', profileMatchUser)
-
   const loading = useSelector(state => state.profileMatch.loading);
   const likedUsers = useSelector(state => state.liking.likedUsers);
 
@@ -105,6 +103,13 @@ const Home = () => {
       .catch(error => {
         console.log(`${isLiked ? 'Dislike' : 'Like'} failed:`, error);
       });
+  };
+
+  const handleFriendRequest = targetUserId => {
+    sendFriendRequest({
+      senderId: user?.id,
+      receiverId: targetUserId,
+    });
   };
 
   const handleSwipe = () => {
@@ -173,6 +178,7 @@ const Home = () => {
             onLikePress={() => handleLike(currentProfile._id)}
             onCardPress={() => handleUserDetailNavigation(currentProfile)}
             onSwiped={handleSwipe}
+            onFriendRequestPress={() => handleFriendRequest(currentProfile._id)}
           />
         ) : (
           <Text

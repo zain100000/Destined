@@ -269,17 +269,32 @@ exports.initializeFriendRequestSocket = (io) => {
       }
     });
 
-    socket.on(FRIEND_REQUEST_EVENTS.GET_PENDING_REQUESTS, async (userId) => {
+    socket.on(FRIEND_REQUEST_EVENTS.GET_PENDING_REQUESTS, async (data) => {
+      // Ensure data is not null or undefined
+      if (!data) {
+        return sendError(socket, "No data provided");
+      }
+
+      // Check if data has a valid userId
+      const { userId } = data;
+
       console.log("GET_PENDING_REQUESTS received for user:", userId);
+
       try {
+        if (!userId) {
+          return sendError(socket, "No user ID provided");
+        }
+
         if (!mongoose.Types.ObjectId.isValid(userId)) {
           return sendError(socket, "Invalid user ID provided");
         }
 
+        // Check if the socket user ID matches the requested user ID
         if (socket.user.id !== userId) {
           return sendError(socket, "Unauthorized to view these requests");
         }
 
+        // Fetch incoming and outgoing friend requests
         const [incomingRequests, outgoingRequests] = await Promise.all([
           Request.find({ receiver: userId, status: "PENDING" })
             .populate("sender")
@@ -293,15 +308,18 @@ exports.initializeFriendRequestSocket = (io) => {
           incoming: incomingRequests.map((req) => ({
             requestId: req._id,
             sender: req.sender,
+            status: req.status,
             createdAt: req.createdAt,
           })),
           outgoing: outgoingRequests.map((req) => ({
             requestId: req._id,
             receiver: req.receiver,
+            status: req.status,
             createdAt: req.createdAt,
           })),
         };
 
+        // Send response to the client
         socket.emit(FRIEND_REQUEST_EVENTS.PENDING_REQUEST_LIST, {
           success: true,
           message: "Pending friend requests retrieved successfully",
@@ -315,29 +333,52 @@ exports.initializeFriendRequestSocket = (io) => {
       }
     });
 
-    socket.on(FRIEND_REQUEST_EVENTS.GET_FRIENDS_LIST, async (userId) => {
+    socket.on(FRIEND_REQUEST_EVENTS.GET_FRIENDS_LIST, async (data) => {
+      // Ensure data is not null or undefined
+      if (!data) {
+        return sendError(socket, "No data provided");
+      }
+
+      // Check if data has a valid userId
+      const { userId } = data;
+
       console.log("GET_FRIENDS_LIST received for user:", userId);
+
       try {
+        // Validate userId exists
+        if (!userId) {
+          return sendError(socket, "No user ID provided");
+        }
+
+        // Validate userId format
         if (!mongoose.Types.ObjectId.isValid(userId)) {
           return sendError(socket, "Invalid user ID provided");
         }
 
+        // Check authorization
         if (socket.user.id !== userId) {
           return sendError(socket, "Unauthorized to view this friends list");
         }
 
-        const user = await User.findById(userId).populate("friends");
+        // Find user and populate complete friend objects
+        const user = await User.findById(userId).populate({
+          path: "friends",
+          options: { sort: { name: 1 } }, // Sort friends alphabetically
+        });
 
         if (!user) {
           return sendError(socket, "User not found");
         }
 
+        // Format response data with complete friend objects
         const responseData = {
           userId: user._id,
-          friends: user.friends,
+          friends: user.friends.map((friend) => friend.toObject()), // Convert Mongoose documents to plain objects
           count: user.friends.length,
+          lastUpdated: new Date(),
         };
 
+        // Send response to client
         socket.emit(FRIEND_REQUEST_EVENTS.FRIENDS_LIST, {
           success: true,
           message: "Friends list retrieved successfully",
