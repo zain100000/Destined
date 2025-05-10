@@ -24,7 +24,16 @@ import {
 import ProfileCard from '../../utils/customComponents/customCards/customProfileCard/ProfileCard';
 import Loader from '../../utils/customComponents/customLoader/Loader';
 import {useNavigation} from '@react-navigation/native';
-import {sendFriendRequest} from '../../utils/customSocket/socketActions/SocketActions';
+import {
+  getPendingFriendRequests,
+  listenToPendingFriendRequestList,
+  listenToFriendRequestAccepted,
+  listenToFriendRequestRejected,
+  removePendingFriendRequestListListener,
+  sendFriendRequest,
+  removeFriendRequestAcceptedListener,
+  removeFriendRequestRejectedListener,
+} from '../../utils/customSocket/socketActions/SocketActions';
 
 const {height} = Dimensions.get('screen');
 
@@ -54,6 +63,7 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [shuffledProfiles, setShuffledProfiles] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [outgoingRequests, setOutgoingRequests] = useState([]);
 
   useEffect(() => {
     const statusBarColor = isDark
@@ -68,8 +78,54 @@ const Home = () => {
       dispatch(getUser(user.id));
       dispatch(getProfileMatch(user.id));
       dispatch(getLikedUsers());
+      // Fetch pending friend requests
+      getPendingFriendRequests({userId: user.id});
     }
   }, [dispatch, user]);
+
+  useEffect(() => {
+    const pendingRequestsListener = data => {
+      if (data.success && data.data?.outgoing) {
+        setOutgoingRequests(data.data.outgoing);
+      }
+    };
+
+    listenToPendingFriendRequestList(pendingRequestsListener);
+
+    return () => {
+      removePendingFriendRequestListListener();
+    };
+  }, []);
+
+  useEffect(() => {
+    const requestAcceptedListener = data => {
+      if (data.success) {
+        setOutgoingRequests(prev =>
+          prev.map(req =>
+            req.requestId === data.data.requestId
+              ? {...req, status: 'ACCEPTED'}
+              : req,
+          ),
+        );
+      }
+    };
+
+    const requestRejectedListener = data => {
+      if (data.success) {
+        setOutgoingRequests(prev =>
+          prev.filter(req => req.requestId !== data.data.requestId),
+        );
+      }
+    };
+
+    listenToFriendRequestAccepted(requestAcceptedListener);
+    listenToFriendRequestRejected(requestRejectedListener);
+
+    return () => {
+      removeFriendRequestAcceptedListener();
+      removeFriendRequestRejectedListener();
+    };
+  }, []);
 
   useEffect(() => {
     if (profileMatchUser?.length) {
@@ -106,6 +162,16 @@ const Home = () => {
   };
 
   const handleFriendRequest = targetUserId => {
+    // Optimistically add to state
+    setOutgoingRequests(prev => [
+      ...prev,
+      {
+        receiver: {_id: targetUserId},
+        requestId: `${targetUserId}`,
+        status: 'PENDING',
+      },
+    ]);
+
     sendFriendRequest({
       senderId: user?.id,
       receiverId: targetUserId,
@@ -179,6 +245,11 @@ const Home = () => {
             onCardPress={() => handleUserDetailNavigation(currentProfile)}
             onSwiped={handleSwipe}
             onFriendRequestPress={() => handleFriendRequest(currentProfile._id)}
+            requestStatus={
+              outgoingRequests.find(
+                req => req.receiver._id === currentProfile?._id,
+              )?.status
+            }
           />
         ) : (
           <Text

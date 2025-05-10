@@ -122,7 +122,7 @@ const Users = () => {
             style={[
               styles.emptyText,
               {
-                color: isDark ? theme.darkMode.text : theme.lightMode.text,
+                color: isDark ? theme.colors.white : theme.colors.primary,
               },
             ]}>
             No friends yet

@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState} from 'react';
+import React, {useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -27,11 +27,12 @@ const ProfileCard = ({
   onCardPress,
   onSwiped,
   onFriendRequestPress,
+  requestStatus,
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
   const scaleIn = useRef(new Animated.Value(0.95)).current;
-  const [requestSent, setRequestSent] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -47,11 +48,6 @@ const ProfileCard = ({
       }),
     ]).start();
   }, []);
-
-  const handleFriendRequest = () => {
-    setRequestSent(true);
-    onFriendRequestPress();
-  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -89,8 +85,6 @@ const ProfileCard = ({
     }),
   ).current;
 
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
   const handlePress = () => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -106,6 +100,35 @@ const ProfileCard = ({
     ]).start();
 
     onLikePress();
+  };
+
+  const getFriendRequestIcon = () => {
+    switch (requestStatus) {
+      case 'PENDING':
+        return 'clock-o';
+      case 'ACCEPTED':
+        return 'check'; // or any icon you prefer for accepted
+      default:
+        return 'user-plus';
+    }
+  };
+
+  const getFriendRequestColors = () => {
+    switch (requestStatus) {
+      case 'PENDING':
+        return ['#FF6FD8', '#3813C2'];
+      case 'ACCEPTED':
+        return ['#4CAF50', '#8BC34A']; // Green gradient for accepted
+      default:
+        return ['#4AC29A', '#BDFFF3'];
+    }
+  };
+
+  const handleFriendRequest = () => {
+    if (!requestStatus) {
+      // Only allow sending if no status exists
+      onFriendRequestPress();
+    }
   };
 
   return (
@@ -169,11 +192,6 @@ const ProfileCard = ({
                           name={liked ? 'heart' : 'heart-o'}
                           size={width * 0.06}
                           color={theme.colors.error}
-                          style={{
-                            textShadowColor: 'rgba(0,0,0,0.3)',
-                            textShadowOffset: {width: 1, height: 1},
-                            textShadowRadius: 2,
-                          }}
                         />
                       </LinearGradient>
                     </Animated.View>
@@ -182,20 +200,18 @@ const ProfileCard = ({
                   <TouchableOpacity
                     style={[
                       styles.friendRequestButton,
-                      requestSent && styles.friendRequestButtonActive,
+                      requestStatus && styles.friendRequestButtonActive,
                     ]}
-                    onPress={handleFriendRequest}>
+                    onPress={handleFriendRequest}
+                    disabled={!!requestStatus} // Disable if request exists
+                  >
                     <LinearGradient
-                      colors={
-                        requestSent
-                          ? ['#FF6FD8', '#3813C2']
-                          : ['#4AC29A', '#BDFFF3']
-                      }
+                      colors={getFriendRequestColors()}
                       style={styles.gradientButton}
                       start={{x: 0, y: 0}}
                       end={{x: 1, y: 1}}>
                       <FontAwesome
-                        name={requestSent ? 'clock-o' : 'user-plus'}
+                        name={getFriendRequestIcon()}
                         size={width * 0.06}
                         color={theme.colors.primary}
                         style={{
