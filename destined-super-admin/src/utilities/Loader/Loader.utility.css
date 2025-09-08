@@ -26,8 +26,8 @@
 .custom-loader {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--secondary);
-  border-left-color: var(--primary);
+  border: 2px solid var(--primary);
+  border-left-color: var(--white);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

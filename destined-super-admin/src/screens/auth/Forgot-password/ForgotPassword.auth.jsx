@@ -124,6 +124,8 @@ const ForgotPassword = () => {
                       value={email}
                       onChange={handleEmailChange}
                       icon={<i className="fas fa-envelope"></i>}
+                      bgColor={"#00000000"}
+                      textColor={"#ffffffff"}
                     />
                   </div>
 
@@ -133,7 +135,7 @@ const ForgotPassword = () => {
                       width={"100%"}
                       onPress={handleForgotPassword}
                       loading={loading}
-                      icon={<i className="fas fa-sign-in-alt"></i>}
+                      icon={<i className="fas fa-paper-plane"></i>}
                     />
                   </div>
                 </form>

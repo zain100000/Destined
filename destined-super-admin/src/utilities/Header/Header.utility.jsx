@@ -1,3 +1,27 @@
+/**
+ * @file Header.utility.jsx
+ * @description
+ * The Header component provides the main navigation bar for the LibrisVault admin dashboard.
+ * It includes:
+ * - Branding/logo section with navigation to the dashboard
+ * - User profile section with avatar, welcome text, and logout button
+ * - Responsive layout using Bootstrap 5 grid and utility classes
+ * - Glassmorphism with animated gradient background
+ *
+ * Features:
+ * - Fetches and displays super admin data (username & profile picture)
+ * - Logout functionality with success/error toast notifications
+ * - Mobile-first responsive design
+ *
+ * Dependencies:
+ * - React, Redux Toolkit, React Router DOM
+ * - toast from react-hot-toast
+ * - Custom Button utility component
+ * - Global styles and Header-specific styles
+ *
+ * @module Header
+ */
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -39,9 +63,8 @@ const Header = () => {
         toast.success(successMessage);
         setTimeout(() => navigate("/"), 1500);
       } else if (logout.rejected.match(resultAction)) {
-        const errorPayload = resultAction.payload;
         const errorMessage =
-          errorPayload?.message || "Logout failed. Please try again.";
+          resultAction.payload?.message || "Logout failed. Please try again.";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -53,23 +76,20 @@ const Header = () => {
   };
 
   return (
-    <section id="header">
-      <div className="header-container">
-        {/* Logo Section */}
-        <div className="logo" onClick={() => navigate("/admin/dashboard")}>
-          <img src={Logo} alt="LibrisVault Logo" className="logo-img" />
-          <span className="logo-text">LibrisVault</span>
-        </div>
+    <header id="header" className="shadow-sm">
+      <div className="container">
+        <div className="row align-items-center justify-content-between">
+          {/* Logo Section */}
+          <div className="col-auto d-flex align-items-center logo">
+            <img src={Logo} alt="Destined Logo" className="logo-img" />
+          </div>
 
-        {/* Navigation Section */}
-        <nav className="nav">
-          <div className="profile-section">
-            {/* User Welcome Message */}
-            <span className="welcome-text">Welcome, {userName}</span>
+          {/* Profile + Nav Section */}
+          <div className="col-auto profile-section d-flex align-items-center">
+            <span className="welcome-text me-3">Hi, {userName}</span>
 
-            {/* Logout Button */}
             <Button
-              className="logout-btn"
+              className="logout-btn me-3"
               onPress={handleLogout}
               loading={loading}
               title="Logout"
@@ -78,12 +98,11 @@ const Header = () => {
               size="small"
             />
 
-            {/* Profile Image */}
             <img src={profilePicture} alt="Profile" className="profile-img" />
           </div>
-        </nav>
+        </div>
       </div>
-    </section>
+    </header>
   );
 };
 

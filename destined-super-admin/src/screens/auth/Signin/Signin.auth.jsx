@@ -158,24 +158,28 @@ const Signin = () => {
                 <form className="form-container" onSubmit={handleSignin}>
                   <div className="email-container">
                     <InputField
-                      label="Enter Email"
+                      placeholder={"Enter Email"}
                       type="text"
                       editable={true}
                       value={email}
                       onChange={handleEmailChange}
                       icon={<i className="fas fa-envelope"></i>}
+                      bgColor={"#00000000"}
+                      textColor={"#ffffffff"}
                     />
                   </div>
 
                   <div className="password-container">
                     <InputField
-                      label="Enter Password"
+                      placeholder={"Enter Password"}
                       type="password"
                       secureTextEntry={true}
                       editable={true}
                       value={password}
                       onChange={handlePasswordChange}
                       icon={<i className="fas fa-lock"></i>}
+                      bgColor={"#00000000"}
+                      textColor={"#ffffffff"}
                     />
                   </div>
 

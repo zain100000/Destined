@@ -76,7 +76,7 @@ exports.checkUploadedFiles = (req, res, next) => {
  * @description Uploads an image buffer to Cloudinary with optional overwrite
  */
 exports.uploadToCloudinary = async (file, type, existingPublicId = null) => {
-  const baseFolder = "LibrisVault";
+  const baseFolder = "Destined";
   let folder = baseFolder;
 
   switch (type) {

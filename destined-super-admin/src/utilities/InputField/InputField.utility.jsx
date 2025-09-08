@@ -53,8 +53,13 @@
  * />
  */
 
+/**
+ * InputField Component
+ * Fixed to handle browser autofill styling issues
+ */
 import "../../styles/global.styles.css";
 import "./InputField.utility.css";
+import { useEffect, useRef } from "react";
 
 const InputField = ({
   icon,
@@ -78,6 +83,38 @@ const InputField = ({
   multiline = false,
   rows = 3,
 }) => {
+  const inputRef = useRef(null);
+
+  // Effect to handle browser autofill
+  useEffect(() => {
+    const handleAnimationStart = (e) => {
+      // This is a hack to detect autofill in most browsers
+      if (
+        e.animationName === "autoFillStart" ||
+        e.animationName === "onAutoFillStart"
+      ) {
+        // Force the background to remain transparent
+        if (inputRef.current) {
+          inputRef.current.style.backgroundColor = "transparent";
+          inputRef.current.style.color = "var(--white)";
+        }
+      }
+    };
+
+    if (inputRef.current) {
+      inputRef.current.addEventListener("animationstart", handleAnimationStart);
+    }
+
+    return () => {
+      if (inputRef.current) {
+        inputRef.current.removeEventListener(
+          "animationstart",
+          handleAnimationStart
+        );
+      }
+    };
+  }, []);
+
   return (
     <section id="input-field">
       <div
@@ -93,8 +130,8 @@ const InputField = ({
               onChange={onValueChange}
               required={required}
               style={{
-                backgroundColor: bgColor || "var(--white)",
-                color: textColor || "var(--dark)",
+                backgroundColor: bgColor || "transparent",
+                color: textColor || "var(--white)",
                 width: fullWidth ? "100%" : "auto",
                 paddingLeft: icon ? "40px" : undefined,
                 ...inputStyle,
@@ -114,6 +151,7 @@ const InputField = ({
           <div className="input-container no-float">
             {icon && <span className="input-icon">{icon}</span>}
             <textarea
+              ref={inputRef}
               value={value}
               onChange={onChange}
               placeholder={label || placeholder}
@@ -122,8 +160,8 @@ const InputField = ({
               className="custom-input"
               readOnly={!editable}
               style={{
-                backgroundColor: bgColor || "var(--white)",
-                color: textColor || "var(--dark)",
+                backgroundColor: bgColor || "transparent",
+                color: textColor || "var(--white)",
                 paddingLeft: icon ? "40px" : undefined,
                 ...inputStyle,
               }}
@@ -133,6 +171,7 @@ const InputField = ({
           <div className={`input-container ${value ? "has-value" : ""}`}>
             {icon && <span className="input-icon">{icon}</span>}
             <input
+              ref={inputRef}
               id={label}
               value={value}
               onChange={onChange}
@@ -142,11 +181,12 @@ const InputField = ({
               required={required}
               readOnly={!editable}
               style={{
-                backgroundColor: bgColor || "var(--white)",
-                color: textColor || "var(--dark)",
+                backgroundColor: bgColor || "transparent",
+                color: textColor || "var(--white)",
                 paddingLeft: icon ? "40px" : undefined,
                 ...inputStyle,
               }}
+              autoComplete="off"
             />
             <label htmlFor={label} className="floating-label">
               {label}

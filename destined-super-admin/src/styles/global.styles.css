@@ -22,8 +22,8 @@
 
   /* Color Palette */
   --primary: #8b0052;
-  --secondary: #1e2f8d;
-  --tertiary: #ff4b8b;
+  --secondary: #ff4b8b;
+  --accent: #ff4b8b;
   --success: #4cd964;
   --error: #ff3b30;
   --white: #ffffff;

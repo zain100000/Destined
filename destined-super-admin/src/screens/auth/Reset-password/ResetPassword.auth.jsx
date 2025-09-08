@@ -132,6 +132,8 @@ const ResetPassword = () => {
                       onChange={handlePasswordChange}
                       icon={<i className="fas fa-lock"></i>}
                       error={passwordError}
+                      bgColor={"#00000000"}
+                      textColor={"#ffffffff"}
                     />
                   </div>
 

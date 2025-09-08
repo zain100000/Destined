@@ -22,6 +22,13 @@ import Signin from "../screens/auth/Signin/Signin.auth";
 import ForgotPassword from "../screens/auth/Forgot-password/ForgotPassword.auth";
 import ResetPassword from "../screens/auth/Reset-password/ResetPassword.auth";
 
+// DashboardLayout + ProtectedRoutes
+import DashboardLayout from "./outlet/Outlet.outlet";
+import ProtectedRoute from "./protected-routes/Protected.routes";
+
+// Dashboard
+import Dashboard from "../screens/Dashboard/Main.dashboard";
+
 // Not Found
 import NotFound from "../screens/Not-found/Not-Found";
 
@@ -37,6 +44,22 @@ const AppNavigator = () => {
       <Route path="/" element={<Signin />} />
       <Route path="/super-admin/forgot-password" element={<ForgotPassword />} />
       <Route path="/super-admin/reset-password" element={<ResetPassword />} />
+
+      {/* Protected Routes */}
+      <Route
+        path="/super-admin"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        {/* Make dashboard the index route for /admin */}
+        <Route index element={<Dashboard />} />
+
+        {/* Dashboard Routes */}
+        <Route path="dashboard" element={<Dashboard />} />
+      </Route>
 
       {/* Not Found Route */}
       <Route path="*" element={<NotFound />} />

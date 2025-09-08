@@ -13,33 +13,28 @@
 import { Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./Dashboard.layout.css";
-import Header from '../../utilities/Header/Header.utility';
-import Sidebar from '../../utilities/Sidebar/Sidebar.utility';
+import Header from "../../utilities/Header/Header.utility";
+import Sidebar from "../../utilities/Sidebar/Sidebar.utility";
 
-/**
- * Dashboard page layout wrapper.
- *
- * @returns {JSX.Element} The structured dashboard layout with header, sidebar, and content area.
- */
 const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // default open on desktop
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-  // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      
-      // Close sidebar when switching to mobile view
-      if (mobile && sidebarOpen) {
+
+      if (mobile) {
         setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [sidebarOpen]);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -55,19 +50,27 @@ const DashboardLayout = () => {
     <div className="dashboard-layout">
       <Header onMenuClick={toggleSidebar} />
       <div className="dashboard-container">
-        <aside 
-          className={`sidebar-container ${sidebarOpen ? 'sidebar-open' : ''} ${isMobile ? 'sidebar-mobile' : ''}`}
-          onClick={closeSidebar}
+        <aside
+          className={`sidebar-container ${sidebarOpen ? "sidebar-open" : ""} ${
+            isMobile ? "sidebar-mobile" : ""
+          }`}
         >
           <Sidebar />
         </aside>
-        
-        {/* Overlay for mobile when sidebar is open */}
+
+        {/* Overlay for mobile */}
         {isMobile && sidebarOpen && (
           <div className="sidebar-overlay" onClick={closeSidebar}></div>
         )}
-        
-        <main className="content" onClick={closeSidebar}>
+
+        <main
+          className="content"
+          onClick={closeSidebar}
+          style={{
+            marginLeft:
+              !isMobile && sidebarOpen ? "var(--sidebar-width, 250px)" : 0,
+          }}
+        >
           <Outlet />
         </main>
       </div>
