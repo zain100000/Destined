@@ -89,7 +89,7 @@ const getEmailTemplate = (content, title = "") => `
  * @description Sends password reset email for DESTINED.
  */
 exports.sendPasswordResetEmail = async (toEmail, resetToken) => {
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  const resetLink = `${process.env.FRONTEND_URL}/super-admin/reset-password?token=${resetToken}`;
   const content = `
     <div style="text-align:center;">
       <h2 style="color:#2d3748; font-size:24px; margin-bottom:20px; font-weight:600;">Reset Your Password</h2>
@@ -106,9 +106,7 @@ exports.sendPasswordResetEmail = async (toEmail, resetToken) => {
       <p style="color:#718096; font-size:14px; margin:20px 0;">
         This reset link is valid for 1 hour. If you didn’t request it, you can safely ignore this email 💕
       </p>
-      <p style="color:#4a5568; margin:0; font-size:14px; font-family:monospace;">
-          <strong>Reset Token:</strong> ${resetToken}
-        </p>
+      
     </div>
   `;
 
